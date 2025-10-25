@@ -1,1 +1,212 @@
-Welcome put your code here
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oak Ridge Elementary Robotics | FLL 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            display: inline-block;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+
+        .season {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        main {
+            padding: 40px 30px;
+        }
+
+        h2 {
+            color: #1e3c72;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            list-style: none;
+        }
+
+        .team-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .team-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-card a {
+            display: block;
+            padding: 30px 20px;
+            text-decoration: none;
+            color: white;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .team-card a::after {
+            content: '→';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .team-card:hover a::after {
+            opacity: 1;
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .robot-emoji {
+            font-size: 2em;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="https://www.wcpss.net/cms/lib/NC01911451/Centricity/Template/GlobalAssets/images///logos/Oak%20Ridge%20Elementary.png" 
+                     alt="Oak Ridge Elementary Logo" 
+                     class="logo"
+                     onerror="this.style.display='none'">
+            </div>
+            <h1><span class="robot-emoji">🤖</span>Oak Ridge Elementary Robotics</h1>
+            <div class="subtitle">FIRST LEGO League</div>
+            <div class="season">2025 — Unearthed Innovation</div>
+        </header>
+
+        <main>
+            <h2>Team Members</h2>
+            <ul class="team-grid">
+                <li class="team-card">
+                    <a href="alan/index.html">Alan</a>
+                </li>
+                <li class="team-card">
+                    <a href="alex/index.html">Alex</a>
+                </li>
+                <li class="team-card">
+                    <a href="arsh/index.html">Arsh</a>
+                </li>
+                <li class="team-card">
+                    <a href="ayden/index.html">Ayden</a>
+                </li>
+                <li class="team-card">
+                    <a href="charlie/index.html">Charlie</a>
+                </li>
+                <li class="team-card">
+                    <a href="kai/index.html">Kai</a>
+                </li>
+                <li class="team-card">
+                    <a href="noah/index.html">Noah</a>
+                </li>
+                <li class="team-card">
+                    <a href="titus/index.html">Titus</a>
+                </li>
+                <li class="team-card">
+                    <a href="vedant/index.html">Vedant</a>
+                </li>
+                <li class="team-card">
+                    <a href="vivaan/index.html">Vivaan</a>
+                </li>
+            </ul>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Oak Ridge Elementary | FIRST LEGO League | Unearthed Innovation Challenge</p>
+        </footer>
+    </div>
+</body>
+</html>
