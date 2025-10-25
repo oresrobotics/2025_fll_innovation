@@ -1,1 +1,318 @@
-Welcome put your code here
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLB 3D Model Viewer</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 
+        CRITICAL FIX: Import Map to resolve bare module specifiers (like 'three') 
+        used internally by GLTFLoader and OrbitControls.
+    -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        /* Use Inter font and set the body/html to full height */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        :root { font-family: 'Inter', sans-serif; }
+        html, body, #app-container, #viewer-container {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        #viewer-container {
+            position: relative;
+        }
+        #file-input {
+            opacity: 0; /* Hide the default input */
+            position: absolute;
+            z-index: -1;
+        }
+        canvas {
+            display: block;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background-color: #6366f1; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased">
+
+    <div id="app-container" class="flex flex-col">
+        <!-- Header/Controls Panel -->
+        <header class="p-4 bg-gray-800 shadow-xl flex items-center justify-between z-10">
+            <h1 class="text-xl font-bold text-indigo-400">3D Model Viewer</h1>
+            <div class="flex items-center space-x-4">
+                <input type="file" id="file-input" accept=".glb,.gltf">
+                <label for="file-input" id="upload-label" class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
+                    Import GLB/GLTF Model
+                </label>
+            </div>
+        </header>
+
+        <!-- Viewer Container -->
+        <div id="viewer-container" class="flex-grow">
+            <div id="loading-overlay" class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300 z-20 hidden">
+                <svg class="animate-spin h-10 w-10 text-indigo-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-lg font-medium text-indigo-300">Loading 3D model...</p>
+            </div>
+            <div id="message-overlay" class="absolute inset-0 flex items-center justify-center p-4 z-10 pointer-events-none">
+                <div class="bg-gray-800/80 backdrop-blur-md p-6 rounded-xl shadow-2xl text-center">
+                    <p class="text-xl font-medium text-gray-300">Click "Import GLB/GLTF Model" to load your file.</p>
+                    <p class="text-sm text-gray-500 mt-2">Use your mouse/touch to interact: Left-click & drag to Rotate, Right-click/Ctrl-click & drag to Pan, Scroll to Zoom.</p>
+                </div>
+            </div>
+            <!-- Canvas will be appended here by Three.js -->
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Three.js Module Imports ---
+        // Using bare specifiers that are now mapped by the <script type="importmap"> block.
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Standard Firebase Setup (Required boilerplate, though not used for storage in this viewer app)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Global variables for Firebase context (required by environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let firebaseConfig = {};
+        try {
+            firebaseConfig = JSON.parse(__firebase_config || '{}');
+        } catch (e) {
+            console.error("Failed to parse firebase config:", e);
+        }
+
+        let app, db, auth;
+        
+        if (Object.keys(firebaseConfig).length > 0) {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Sign in
+            (async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    console.log("Firebase Auth successful. User ID:", auth.currentUser?.uid || 'N/A (anonymous)');
+                } catch (error) {
+                    console.error("Firebase Auth failed:", error);
+                }
+            })();
+        } else {
+            console.warn("Firebase config is missing. Proceeding without Firebase services.");
+        }
+        // End of boilerplate
+
+        // --- Three.js 3D Viewer Logic ---
+
+        let scene, camera, renderer, controls;
+        let currentModel = null;
+        const container = document.getElementById('viewer-container');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const messageOverlay = document.getElementById('message-overlay');
+        const fileInput = document.getElementById('file-input');
+        
+        // Now using the imported GLTFLoader
+        const loader = new GLTFLoader(); 
+
+        /**
+         * Initializes the Three.js scene, camera, renderer, and controls.
+         */
+        function initScene() {
+            // 1. Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1f2937); // Dark gray background
+
+            // 2. Camera setup
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 3);
+
+            // 3. Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Modern PBR/GLTF rendering setup
+            renderer.outputColorSpace = THREE.SRGBColorSpace; 
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2; 
+            
+            container.appendChild(renderer.domElement);
+
+            // 4. Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight1.position.set(5, 5, 5);
+            scene.add(directionalLight1);
+
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight2.position.set(-5, 5, -5);
+            scene.add(directionalLight2);
+
+            // 5. Controls setup (Rotation, Pan, Zoom)
+            // Now using the imported OrbitControls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // smooth rotation
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = true; // allow panning
+            controls.minDistance = 0.5; // minimum zoom
+            controls.maxDistance = 50; // maximum zoom
+
+            // Initial model placeholder (a simple plane grid)
+            const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444);
+            scene.add(gridHelper);
+
+            // Start the animation loop
+            animate();
+            
+            // Add resize listener
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        /**
+         * Handles window resizing to keep the scene filling the container.
+         */
+        function onWindowResize() {
+            if (!renderer) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        /**
+         * The main animation loop for continuous rendering and updating controls.
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) {
+                controls.update(); // only required if controls.enableDamping or controls.autoRotate are set
+            }
+            if (renderer) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        /**
+         * Loads a GLB/GLTF file from the selected file input.
+         * @param {File} file The selected file object.
+         */
+        function loadModelFromFile(file) {
+            loadingOverlay.classList.remove('hidden');
+            messageOverlay.classList.add('hidden');
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const url = event.target.result;
+                
+                // Remove previous model if one exists
+                if (currentModel) {
+                    scene.remove(currentModel);
+                    currentModel.traverse((object) => {
+                        if (object.isMesh) {
+                            object.geometry.dispose();
+                            if (object.material.isMaterial) {
+                                // Dispose materials and textures
+                                for (const key in object.material) {
+                                    const value = object.material[key];
+                                    if (value && typeof value === 'object' && 'dispose' in value) {
+                                        value.dispose();
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Load the new model
+                loader.parse(url, '', (gltf) => {
+                    currentModel = gltf.scene;
+                    
+                    // Center and scale the model
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    currentModel.position.sub(center); // Center the object
+                    
+                    // Normalize size (e.g., fit within a 2x2x2 cube)
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scaleFactor = 2.0 / maxDim; // Adjust 2.0 for desired display size
+                    currentModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    
+                    scene.add(currentModel);
+
+                    // Reset camera position and controls target to view the new model
+                    controls.target.set(0, 0, 0);
+                    camera.position.set(0, 0, maxDim * scaleFactor * 1.5 + 2); // Position camera based on model size
+                    controls.update();
+                    
+                    loadingOverlay.classList.add('hidden');
+                    console.log('Model loaded successfully:', file.name);
+
+                }, (xhr) => {
+                    // Optional: Progress updates
+                    const progress = (xhr.loaded / xhr.total) * 100;
+                    console.log(progress.toFixed(0) + '% loaded');
+                }, (error) => {
+                    loadingOverlay.classList.add('hidden');
+                    messageOverlay.classList.remove('hidden');
+                    messageOverlay.querySelector('p:first-child').textContent = `Error loading model: ${error.message}`;
+                    console.error('Error loading GLTF/GLB:', error);
+                });
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- Event Listeners ---
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // Check for file type (.glb or .gltf)
+                const fileName = file.name.toLowerCase();
+                if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                    loadModelFromFile(file);
+                } else {
+                    // Use a custom message box instead of alert()
+                    messageOverlay.classList.remove('hidden');
+                    messageOverlay.querySelector('p:first-child').textContent = `Unsupported file type: Please select a .glb or .gltf file.`;
+                    console.error('Unsupported file type selected.');
+                }
+            }
+            // Reset the input value so the same file can be loaded again if needed
+            event.target.value = '';
+        });
+        
+        // Initialize the 3D environment when the script loads
+        initScene();
+
+    </script>
+</body>
+</html>
