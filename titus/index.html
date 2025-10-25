@@ -1,1 +1,1551 @@
-Welcome put your code here
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parts - 3D Model Assembly Platform</title>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #e52521;
+            --secondary-color: #0a7e3c;
+            --accent-color: #f9c74f;
+            --mario-red: #e52521;
+            --luigi-blue: #0a7e3c;
+            --dark-bg: #ffffff;
+            --light-bg: #f8f9fa;
+            --text-light: #333333;
+            --text-dark: #212529;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+            color: var(--text-light);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Mario/Luigi Decorations */
+        .mario-decoration {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .mario-decoration:hover {
+            transform: scale(1.1);
+        }
+
+        .luigi-decoration {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .luigi-decoration:hover {
+            transform: scale(1.1);
+        }
+
+        /* CSS Mario Character with Face */
+        .mario {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .mario-head {
+            width: 50px;
+            height: 50px;
+            background-color: #fdbcb4;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 15px;
+            z-index: 2;
+        }
+
+        .mario-hat {
+            width: 60px;
+            height: 25px;
+            background-color: #e52521;
+            border-radius: 50% 50% 0 0;
+            position: absolute;
+            top: 0;
+            left: 10px;
+            z-index: 3;
+        }
+
+        .mario-hat::after {
+            content: "M";
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            top: 2px;
+            left: 22px;
+        }
+
+        .mario-body {
+            width: 40px;
+            height: 30px;
+            background-color: #e52521;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            z-index: 1;
+        }
+
+        .mario-overalls {
+            width: 40px;
+            height: 20px;
+            background-color: #0a7e3c;
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            z-index: 1;
+        }
+
+        /* Mario Face Details */
+        .mario-eye {
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            z-index: 4;
+        }
+
+        .mario-eye.left {
+            left: 25px;
+        }
+
+        .mario-eye.right {
+            left: 45px;
+        }
+
+        .mario-eyebrow {
+            width: 12px;
+            height: 3px;
+            background-color: #000;
+            position: absolute;
+            top: 15px;
+            z-index: 4;
+        }
+
+        .mario-eyebrow.left {
+            left: 23px;
+            transform: rotate(-10deg);
+        }
+
+        .mario-eyebrow.right {
+            left: 43px;
+            transform: rotate(10deg);
+        }
+
+        .mario-nose {
+            width: 10px;
+            height: 8px;
+            background-color: #fdbcb4;
+            border-radius: 50%;
+            position: absolute;
+            top: 25px;
+            left: 35px;
+            z-index: 4;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .mario-mustache {
+            width: 25px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 27px;
+            z-index: 4;
+        }
+
+        /* CSS Luigi Character with Face */
+        .luigi {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .luigi-head {
+            width: 50px;
+            height: 50px;
+            background-color: #fdbcb4;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 15px;
+            z-index: 2;
+        }
+
+        .luigi-hat {
+            width: 60px;
+            height: 25px;
+            background-color: #0a7e3c;
+            border-radius: 50% 50% 0 0;
+            position: absolute;
+            top: 0;
+            left: 10px;
+            z-index: 3;
+        }
+
+        .luigi-hat::after {
+            content: "L";
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            top: 2px;
+            left: 22px;
+        }
+
+        .luigi-body {
+            width: 40px;
+            height: 30px;
+            background-color: #0a7e3c;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            z-index: 1;
+        }
+
+        .luigi-overalls {
+            width: 40px;
+            height: 20px;
+            background-color: #0a7e3c;
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            z-index: 1;
+        }
+
+        /* Luigi Face Details */
+        .luigi-eye {
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            z-index: 4;
+        }
+
+        .luigi-eye.left {
+            left: 25px;
+        }
+
+        .luigi-eye.right {
+            left: 45px;
+        }
+
+        .luigi-eyebrow {
+            width: 12px;
+            height: 3px;
+            background-color: #000;
+            position: absolute;
+            top: 15px;
+            z-index: 4;
+        }
+
+        .luigi-eyebrow.left {
+            left: 23px;
+            transform: rotate(-10deg);
+        }
+
+        .luigi-eyebrow.right {
+            left: 43px;
+            transform: rotate(10deg);
+        }
+
+        .luigi-nose {
+            width: 10px;
+            height: 8px;
+            background-color: #fdbcb4;
+            border-radius: 50%;
+            position: absolute;
+            top: 25px;
+            left: 35px;
+            z-index: 4;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .luigi-mustache {
+            width: 25px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 27px;
+            z-index: 4;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 100;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 2rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Left Panel - Mario Red */
+        .left-panel {
+            background: rgba(229, 37, 33, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            border: 2px solid var(--mario-red);
+        }
+
+        .left-panel .panel-title {
+            color: var(--mario-red);
+        }
+
+        .left-panel .upload-area {
+            border: 2px dashed var(--mario-red);
+            background-color: rgba(229, 37, 33, 0.05);
+        }
+
+        .left-panel .upload-area:hover {
+            background: rgba(229, 37, 33, 0.1);
+        }
+
+        .left-panel .upload-area i {
+            color: var(--mario-red);
+        }
+
+        .left-panel .part-item {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(229, 37, 33, 0.2);
+        }
+
+        .left-panel .part-item:hover {
+            background: rgba(229, 37, 33, 0.1);
+        }
+
+        .left-panel .part-item.selected {
+            background: rgba(229, 37, 33, 0.2);
+            border-left: 3px solid var(--mario-red);
+        }
+
+        .left-panel .part-visibility {
+            color: var(--mario-red);
+        }
+
+        /* Right Panel - Luigi Blue */
+        .right-panel {
+            background: rgba(10, 126, 60, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            border: 2px solid var(--luigi-blue);
+        }
+
+        .right-panel .panel-title {
+            color: var(--luigi-blue);
+        }
+
+        .right-panel .info-section h3 {
+            color: var(--luigi-blue);
+        }
+
+        .right-panel .info-item {
+            border-bottom: 1px solid rgba(10, 126, 60, 0.2);
+        }
+
+        .right-panel .slider-control input[type="range"]::-webkit-slider-thumb {
+            background: var(--luigi-blue);
+        }
+
+        .right-panel .btn-primary {
+            background: linear-gradient(135deg, var(--luigi-blue), var(--secondary-color));
+        }
+
+        /* 3D Viewer - White Background */
+        .viewer-container {
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        #viewer {
+            width: 100%;
+            height: calc(100vh - 200px);
+            border-radius: 15px;
+        }
+
+        .viewer-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .control-btn:hover {
+            background: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        .control-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Panel Title */
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-area {
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .parts-list {
+            margin-top: 1.5rem;
+        }
+
+        .part-item {
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .part-item:hover {
+            transform: translateX(5px);
+        }
+
+        .part-item.selected {
+            border-left: 3px solid;
+        }
+
+        .part-visibility {
+            cursor: pointer;
+        }
+
+        .info-section {
+            margin-bottom: 2rem;
+        }
+
+        .info-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid;
+        }
+
+        .info-label {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        .transform-controls {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .slider-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .slider-control input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text-light);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(229, 37, 33, 0.3);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(249, 199, 79, 0.9);
+            color: var(--text-dark);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1001;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* Mario/Luigi Speech Bubbles */
+        .speech-bubble {
+            position: absolute;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: var(--shadow);
+            display: none;
+            z-index: 100;
+            font-size: 14px;
+            max-width: 150px;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-top-color: white;
+            border-bottom: 0;
+            margin-left: -10px;
+        }
+
+        .mario-decoration:hover .speech-bubble {
+            display: block;
+            top: -60px;
+            left: -35px;
+        }
+
+        .luigi-decoration:hover .speech-bubble {
+            display: block;
+            top: -60px;
+            left: -35px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-panel, .right-panel {
+                max-height: none;
+            }
+            
+            #viewer {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mario Decoration -->
+    <div class="mario-decoration">
+        <div class="mario">
+            <div class="mario-hat"></div>
+            <div class="mario-head"></div>
+            <div class="mario-eye left"></div>
+            <div class="mario-eye right"></div>
+            <div class="mario-eyebrow left"></div>
+            <div class="mario-eyebrow right"></div>
+            <div class="mario-nose"></div>
+            <div class="mario-mustache"></div>
+            <div class="mario-body"></div>
+            <div class="mario-overalls"></div>
+        </div>
+        <div class="speech-bubble">Let's-a go!</div>
+    </div>
+
+    <!-- Luigi Decoration -->
+    <div class="luigi-decoration">
+        <div class="luigi">
+            <div class="luigi-hat"></div>
+            <div class="luigi-head"></div>
+            <div class="luigi-eye left"></div>
+            <div class="luigi-eye right"></div>
+            <div class="luigi-eyebrow left"></div>
+            <div class="luigi-eyebrow right"></div>
+            <div class="luigi-nose"></div>
+            <div class="luigi-mustache"></div>
+            <div class="luigi-body"></div>
+            <div class="luigi-overalls"></div>
+        </div>
+        <div class="speech-bubble">Okie dokie!</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-cubes"></i>
+                <h1>Smart Parts</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#"><i class="fas fa-folder-open"></i> Library</a></li>
+                    <li><a href="#"><i class="fas fa-tools"></i> Tools</a></li>
+                    <li><a href="#"><i class="fas fa-question-circle"></i> Help</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Panel - Mario Red -->
+        <aside class="left-panel">
+            <h2 class="panel-title">
+                <i class="fas fa-cube"></i>
+                Model Library
+            </h2>
+            
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Upload GLB File</p>
+                <small>Click or drag file here</small>
+            </div>
+            <input type="file" id="fileInput" accept=".glb,.gltf">
+            
+            <div class="parts-list">
+                <h3 class="panel-title">
+                    <i class="fas fa-puzzle-piece"></i>
+                    Model Parts
+                </h3>
+                <div id="partsContainer">
+                    <p style="color: rgba(0,0,0,0.5); text-align: center; padding: 2rem 0;">
+                        No model loaded
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 3D Viewer - White Background -->
+        <main class="viewer-container">
+            <div id="viewer"></div>
+            <div class="viewer-controls">
+                <button class="control-btn" id="rotateBtn" title="Rotate">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="control-btn" id="translateBtn" title="Move">
+                    <i class="fas fa-arrows-alt"></i>
+                </button>
+                <button class="control-btn" id="scaleBtn" title="Scale">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="control-btn" id="resetBtn" title="Reset View">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="control-btn" id="gridBtn" title="Toggle Grid">
+                    <i class="fas fa-th"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Right Panel - Luigi Blue -->
+        <aside class="right-panel">
+            <div class="info-section">
+                <h3><i class="fas fa-info-circle"></i> Model Information</h3>
+                <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="modelName">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Parts:</span>
+                    <span class="info-value" id="partsCount">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Format:</span>
+                    <span class="info-value" id="modelFormat">GLB</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" id="modelStatus">Ready</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fas fa-sliders-h"></i> Transform Controls</h3>
+                <div class="transform-controls">
+                    <div class="slider-control">
+                        <label>
+                            Position X
+                            <span id="posXValue">0</span>
+                        </label>
+                        <input type="range" id="posX" min="-10" max="10" step="0.1" value="0">
+                    </div>
+                    <div class="slider-control">
+                        <label>
+                            Position Y
+                            <span id="posYValue">0</span>
+                        </label>
+                        <input type="range" id="posY" min="-10" max="10" step="0.1" value="0">
+                    </div>
+                    <div class="slider-control">
+                        <label>
+                            Position Z
+                            <span id="posZValue">0</span>
+                        </label>
+                        <input type="range" id="posZ" min="-10" max="10" step="0.1" value="0">
+                    </div>
+                    <div class="slider-control">
+                        <label>
+                            Rotation
+                            <span id="rotValue">0°</span>
+                        </label>
+                        <input type="range" id="rotation" min="0" max="360" step="1" value="0">
+                    </div>
+                    <div class="slider-control">
+                        <label>
+                            Scale
+                            <span id="scaleValue">1.0</span>
+                        </label>
+                        <input type="range" id="scale" min="0.1" max="3" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="snapBtn">
+                    <i class="fas fa-magnet"></i>
+                    Snap Parts
+                </button>
+                <button class="btn btn-secondary" id="exportBtn">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="btn btn-secondary" id="screenshotBtn">
+                    <i class="fas fa-camera"></i>
+                    Screenshot
+                </button>
+                <button class="btn btn-secondary" id="measureBtn">
+                    <i class="fas fa-ruler"></i>
+                    Measure
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Three.js Scene Setup
+        let scene, camera, renderer, controls, transformControls;
+        let modelParts = [];
+        let selectedPart = null;
+        let gridHelper;
+        let ambientLight, directionalLight;
+        let marioModel, luigiModel;
+
+        function initThreeJS() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+            scene.fog = new THREE.Fog(0xffffff, 10, 50);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                document.getElementById('viewer').clientWidth / document.getElementById('viewer').clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 5, 5);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(
+                document.getElementById('viewer').clientWidth,
+                document.getElementById('viewer').clientHeight
+            );
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('viewer').appendChild(renderer.domElement);
+
+            // Lights
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Transform Controls
+            transformControls = new THREE.TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('change', render);
+            transformControls.addEventListener('dragging-changed', function(event) {
+                controls.enabled = !event.value;
+            });
+            scene.add(transformControls);
+
+            // Grid
+            gridHelper = new THREE.GridHelper(20, 20, 0xcccccc, 0xeeeeee);
+            scene.add(gridHelper);
+
+            // Ground plane for shadows
+            const planeGeometry = new THREE.PlaneGeometry(20, 20);
+            const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = -0.01;
+            plane.receiveShadow = true;
+            scene.add(plane);
+
+            // Add Mario and Luigi 3D models with faces
+            createMarioModel();
+            createLuigiModel();
+
+            // Animation loop
+            animate();
+        }
+
+        function createMarioModel() {
+            const marioGroup = new THREE.Group();
+            
+            // Mario's body (red)
+            const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xe52521 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            body.position.y = 0.5;
+            marioGroup.add(body);
+            
+            // Mario's head
+            const headGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.castShadow = true;
+            head.position.y = 1.5;
+            marioGroup.add(head);
+            
+            // Mario's hat
+            const hatGeometry = new THREE.CapsuleGeometry(0.42, 0.2, 4, 8);
+            const hatMaterial = new THREE.MeshStandardMaterial({ color: 0xe52521 });
+            const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+            hat.castShadow = true;
+            hat.position.y = 1.9;
+            marioGroup.add(hat);
+            
+            // Mario's hat emblem
+            const emblemGeometry = new THREE.CircleGeometry(0.15, 32);
+            const emblemMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const emblem = new THREE.Mesh(emblemGeometry, emblemMaterial);
+            emblem.position.set(0, 1.9, 0.4);
+            marioGroup.add(emblem);
+            
+            // Mario's overalls
+            const overallsGeometry = new THREE.BoxGeometry(0.8, 0.5, 0.3);
+            const overallsMaterial = new THREE.MeshStandardMaterial({ color: 0x0a7e3c });
+            const overalls = new THREE.Mesh(overallsGeometry, overallsMaterial);
+            overalls.castShadow = true;
+            overalls.position.y = 0.2;
+            marioGroup.add(overalls);
+            
+            // Mario's mustache
+            const mustacheGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.05);
+            const mustacheMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const mustache = new THREE.Mesh(mustacheGeometry, mustacheMaterial);
+            mustache.position.set(0, 1.4, 0.35);
+            marioGroup.add(mustache);
+            
+            // Mario's eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.1, 1.55, 0.35);
+            marioGroup.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.1, 1.55, 0.35);
+            marioGroup.add(rightEye);
+            
+            // Mario's nose
+            const noseGeometry = new THREE.SphereGeometry(0.07, 16, 16);
+            const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+            const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+            nose.position.set(0, 1.45, 0.38);
+            marioGroup.add(nose);
+            
+            // Position Mario
+            marioGroup.position.set(-3, 0, -3);
+            marioModel = marioGroup;
+            scene.add(marioModel);
+        }
+
+        function createLuigiModel() {
+            const luigiGroup = new THREE.Group();
+            
+            // Luigi's body (green)
+            const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x0a7e3c });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            body.position.y = 0.5;
+            luigiGroup.add(body);
+            
+            // Luigi's head
+            const headGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.castShadow = true;
+            head.position.y = 1.5;
+            luigiGroup.add(head);
+            
+            // Luigi's hat
+            const hatGeometry = new THREE.CapsuleGeometry(0.42, 0.2, 4, 8);
+            const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x0a7e3c });
+            const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+            hat.castShadow = true;
+            hat.position.y = 1.9;
+            luigiGroup.add(hat);
+            
+            // Luigi's hat emblem
+            const emblemGeometry = new THREE.CircleGeometry(0.15, 32);
+            const emblemMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const emblem = new THREE.Mesh(emblemGeometry, emblemMaterial);
+            emblem.position.set(0, 1.9, 0.4);
+            luigiGroup.add(emblem);
+            
+            // Luigi's overalls
+            const overallsGeometry = new THREE.BoxGeometry(0.8, 0.5, 0.3);
+            const overallsMaterial = new THREE.MeshStandardMaterial({ color: 0x0a7e3c });
+            const overalls = new THREE.Mesh(overallsGeometry, overallsMaterial);
+            overalls.castShadow = true;
+            overalls.position.y = 0.2;
+            luigiGroup.add(overalls);
+            
+            // Luigi's mustache
+            const mustacheGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.05);
+            const mustacheMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const mustache = new THREE.Mesh(mustacheGeometry, mustacheMaterial);
+            mustache.position.set(0, 1.4, 0.35);
+            luigiGroup.add(mustache);
+            
+            // Luigi's eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.1, 1.55, 0.35);
+            luigiGroup.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.1, 1.55, 0.35);
+            luigiGroup.add(rightEye);
+            
+            // Luigi's nose
+            const noseGeometry = new THREE.SphereGeometry(0.07, 16, 16);
+            const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+            const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+            nose.position.set(0, 1.45, 0.38);
+            luigiGroup.add(nose);
+            
+            // Position Luigi
+            luigiGroup.position.set(3, 0, -3);
+            luigiModel = luigiGroup;
+            scene.add(luigiModel);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animate Mario and Luigi
+            if (marioModel) {
+                marioModel.rotation.y += 0.01;
+                marioModel.position.y = Math.sin(Date.now() * 0.001) * 0.2;
+            }
+            
+            if (luigiModel) {
+                luigiModel.rotation.y -= 0.01;
+                luigiModel.position.y = Math.sin(Date.now() * 0.001 + Math.PI) * 0.2;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+        // Load GLB File
+        function loadGLBFile(file) {
+            showLoading(true);
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const loader = new THREE.GLTFLoader();
+                loader.parse(e.target.result, '', function(gltf) {
+                    // Clear existing model
+                    clearModel();
+                    
+                    // Process loaded model
+                    const model = gltf.scene;
+                    model.traverse(function(child) {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            
+                            // Store part information
+                            const partInfo = {
+                                name: child.name || `Part ${modelParts.length + 1}`,
+                                mesh: child,
+                                visible: true,
+                                originalPosition: child.position.clone(),
+                                originalRotation: child.rotation.clone(),
+                                originalScale: child.scale.clone()
+                            };
+                            modelParts.push(partInfo);
+                        }
+                    });
+                    
+                    // Center model
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    model.position.sub(center);
+                    
+                    scene.add(model);
+                    updatePartsList();
+                    showNotification('Model loaded successfully!');
+                    showLoading(false);
+                    
+                    // Update model info
+                    updateModelInfo();
+                }, function(error) {
+                    console.error('Error loading GLB:', error);
+                    showNotification('Error loading model file', 'error');
+                    showLoading(false);
+                });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function clearModel() {
+            modelParts.forEach(part => {
+                scene.remove(part.mesh);
+            });
+            modelParts = [];
+            selectedPart = null;
+            transformControls.detach();
+            updatePartsList();
+        }
+
+        function updatePartsList() {
+            const container = document.getElementById('partsContainer');
+            
+            if (modelParts.length === 0) {
+                container.innerHTML = '<p style="color: rgba(0,0,0,0.5); text-align: center; padding: 2rem 0;">No model loaded</p>';
+                return;
+            }
+            
+            container.innerHTML = modelParts.map((part, index) => `
+                <div class="part-item ${selectedPart === part ? 'selected' : ''}" data-index="${index}">
+                    <span>${part.name}</span>
+                    <i class="fas fa-eye part-visibility" data-index="${index}"></i>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            container.querySelectorAll('.part-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('part-visibility')) {
+                        selectPart(parseInt(this.dataset.index));
+                    }
+                });
+            });
+            
+            container.querySelectorAll('.part-visibility').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    togglePartVisibility(parseInt(this.dataset.index));
+                });
+            });
+        }
+
+        function selectPart(index) {
+            selectedPart = modelParts[index];
+            transformControls.attach(selectedPart.mesh);
+            updatePartsList();
+            updateTransformControls();
+        }
+
+        function togglePartVisibility(index) {
+            const part = modelParts[index];
+            part.visible = !part.visible;
+            part.mesh.visible = part.visible;
+            
+            const icon = document.querySelector(`.part-visibility[data-index="${index}"]`);
+            icon.className = part.visible ? 'fas fa-eye part-visibility' : 'fas fa-eye-slash part-visibility';
+        }
+
+        function updateTransformControls() {
+            if (!selectedPart) return;
+            
+            const pos = selectedPart.mesh.position;
+            const rot = selectedPart.mesh.rotation;
+            const scale = selectedPart.mesh.scale;
+            
+            document.getElementById('posX').value = pos.x;
+            document.getElementById('posY').value = pos.y;
+            document.getElementById('posZ').value = pos.z;
+            document.getElementById('rotation').value = THREE.MathUtils.radToDeg(rot.y);
+            document.getElementById('scale').value = scale.x;
+            
+            document.getElementById('posXValue').textContent = pos.x.toFixed(1);
+            document.getElementById('posYValue').textContent = pos.y.toFixed(1);
+            document.getElementById('posZValue').textContent = pos.z.toFixed(1);
+            document.getElementById('rotValue').textContent = Math.round(THREE.MathUtils.radToDeg(rot.y)) + '°';
+            document.getElementById('scaleValue').textContent = scale.x.toFixed(1);
+        }
+
+        function updateModelInfo() {
+            document.getElementById('modelName').textContent = 'Assembly Model';
+            document.getElementById('partsCount').textContent = modelParts.length;
+            document.getElementById('modelFormat').textContent = 'GLB';
+            document.getElementById('modelStatus').textContent = 'Loaded';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show';
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            
+            // File upload
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+                    loadGLBFile(file);
+                } else {
+                    showNotification('Please select a valid GLB or GLTF file', 'error');
+                }
+            });
+            
+            // Drag and drop
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.background = 'rgba(229, 37, 33, 0.1)';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.style.background = '';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.background = '';
+                const file = e.dataTransfer.files[0];
+                if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+                    loadGLBFile(file);
+                }
+            });
+            
+            // Transform controls
+            document.getElementById('rotateBtn').addEventListener('click', function() {
+                if (selectedPart) {
+                    transformControls.setMode('rotate');
+                    updateControlButtons(this);
+                }
+            });
+            
+            document.getElementById('translateBtn').addEventListener('click', function() {
+                if (selectedPart) {
+                    transformControls.setMode('translate');
+                    updateControlButtons(this);
+                }
+            });
+            
+            document.getElementById('scaleBtn').addEventListener('click', function() {
+                if (selectedPart) {
+                    transformControls.setMode('scale');
+                    updateControlButtons(this);
+                }
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                if (selectedPart) {
+                    selectedPart.mesh.position.copy(selectedPart.originalPosition);
+                    selectedPart.mesh.rotation.copy(selectedPart.originalRotation);
+                    selectedPart.mesh.scale.copy(selectedPart.originalScale);
+                    updateTransformControls();
+                }
+            });
+            
+            document.getElementById('gridBtn').addEventListener('click', function() {
+                gridHelper.visible = !gridHelper.visible;
+                this.classList.toggle('active');
+            });
+            
+            // Sliders
+            ['posX', 'posY', 'posZ'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function() {
+                    if (selectedPart) {
+                        const value = parseFloat(this.value);
+                        const axis = id.replace('pos', '').toLowerCase();
+                        selectedPart.mesh.position[axis] = value;
+                        document.getElementById(id + 'Value').textContent = value.toFixed(1);
+                    }
+                });
+            });
+            
+            document.getElementById('rotation').addEventListener('input', function() {
+                if (selectedPart) {
+                    const value = parseFloat(this.value);
+                    selectedPart.mesh.rotation.y = THREE.MathUtils.degToRad(value);
+                    document.getElementById('rotValue').textContent = Math.round(value) + '°';
+                }
+            });
+            
+            document.getElementById('scale').addEventListener('input', function() {
+                if (selectedPart) {
+                    const value = parseFloat(this.value);
+                    selectedPart.mesh.scale.set(value, value, value);
+                    document.getElementById('scaleValue').textContent = value.toFixed(1);
+                }
+            });
+            
+            // Action buttons
+            document.getElementById('snapBtn').addEventListener('click', function() {
+                if (modelParts.length > 1) {
+                    // Simple snap logic - in real app, would be more sophisticated
+                    showNotification('Parts snapped together!');
+                }
+            });
+            
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                showNotification('Export feature coming soon!');
+            });
+            
+            document.getElementById('screenshotBtn').addEventListener('click', function() {
+                renderer.render(scene, camera);
+                const dataURL = renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'smart-parts-screenshot.png';
+                link.href = dataURL;
+                link.click();
+                showNotification('Screenshot saved!');
+            });
+            
+            document.getElementById('measureBtn').addEventListener('click', function() {
+                showNotification('Measurement tool coming soon!');
+            });
+            
+            // Mario/Luigi interactions
+            document.querySelector('.mario-decoration').addEventListener('click', function() {
+                if (marioModel) {
+                    marioModel.position.set(
+                        Math.random() * 4 - 2,
+                        0,
+                        Math.random() * 4 - 2
+                    );
+                    showNotification('Mario moved!');
+                }
+            });
+            
+            document.querySelector('.luigi-decoration').addEventListener('click', function() {
+                if (luigiModel) {
+                    luigiModel.position.set(
+                        Math.random() * 4 - 2,
+                        0,
+                        Math.random() * 4 - 2
+                    );
+                    showNotification('Luigi moved!');
+                }
+            });
+            
+            // Window resize
+            window.addEventListener('resize', function() {
+                camera.aspect = document.getElementById('viewer').clientWidth / document.getElementById('viewer').clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(
+                    document.getElementById('viewer').clientWidth,
+                    document.getElementById('viewer').clientHeight
+                );
+            });
+        });
+
+        function updateControlButtons(activeBtn) {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (btn.id === 'rotateBtn' || btn.id === 'translateBtn' || btn.id === 'scaleBtn') {
+                    btn.classList.remove('active');
+                }
+            });
+            activeBtn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
