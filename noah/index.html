@@ -1,1 +1,1727 @@
-Welcome put your code here
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Land - 3D Archaeology Assembly Studio</title>
+    
+    <!-- Three.js and dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B4513;
+            --primary-dark: #654321;
+            --secondary: #D2691E;
+            --accent: #CD853F;
+            --success: #6B8E23;
+            --warning: #DAA520;
+            --danger: #B22222;
+            --light: #FFF8DC;
+            --white: #FFFFFF;
+            --light-gray: #F5F5F5;
+            --medium-gray: #E0E0E0;
+            --dark-gray: #A9A9A9;
+            --text: #333333;
+            --text-secondary: #666666;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --border: #D2B48C;
+            --highlight: #FFD700;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, var(--white) 100%);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 80px 1fr 320px;
+            height: 100vh;
+        }
+
+        /* Header with Logo */
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--white);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 100;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(139, 69, 19, 0.3);
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFF8DC" d="M50,10 L60,30 L80,30 L65,45 L75,65 L50,50 L25,65 L35,45 L20,30 L40,30 Z"/></svg>') center/60% no-repeat;
+        }
+
+        .logo-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.2);
+        }
+
+        .logo-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-left: 1rem;
+        }
+
+        /* Adjust main container to account for header */
+        .app-container {
+            padding-top: 70px;
+            height: calc(100vh - 70px);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+            gap: 0.5rem;
+            box-shadow: 2px 0 5px var(--shadow);
+        }
+
+        .tool-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            background: var(--light-gray);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .tool-btn:hover {
+            background: var(--secondary);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(210, 105, 30, 0.3);
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .tool-separator {
+            width: 40px;
+            height: 1px;
+            background: var(--border);
+            margin: 0.5rem 0;
+        }
+
+        /* Main 3D Viewport */
+        .viewport {
+            position: relative;
+            background: var(--white);
+            background-image: 
+                radial-gradient(circle at center, rgba(210, 179, 140, 0.05) 0%, transparent 70%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="%23D2B48C" stroke-width="0.5" opacity="0.2"/></svg>');
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        #canvas-container.move-mode {
+            cursor: move;
+        }
+
+        #canvas-container.rotate-mode {
+            cursor: grab;
+        }
+
+        #canvas-container.scale-mode {
+            cursor: nw-resize;
+        }
+
+        /* Viewport Controls */
+        .viewport-controls {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .view-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            background: var(--light-gray);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+            box-shadow: 0 4px 12px var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .info-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Selection Info */
+        .selection-info {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .selection-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--white);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: -2px 0 5px var(--shadow);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--light) 0%, var(--white) 100%);
+        }
+
+        .sidebar-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            margin: 1.5rem;
+            padding: 2rem;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: var(--light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><path fill="%23D2B48C" fill-opacity="0.1" d="M20,5 L25,15 L35,15 L27,22 L30,32 L20,25 L10,32 L13,22 L5,15 L15,15 Z"/></svg>') repeat;
+            opacity: 0.3;
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background: rgba(210, 105, 30, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(205, 133, 63, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-text {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Pieces List */
+        .pieces-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .piece-item {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 4px var(--shadow);
+            position: relative;
+        }
+
+        .piece-item:hover {
+            background: rgba(210, 105, 30, 0.1);
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .piece-item.selected {
+            background: rgba(139, 69, 19, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+        }
+
+        .piece-item.assembled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .piece-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+        }
+
+        .piece-info {
+            flex: 1;
+        }
+
+        .piece-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .piece-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .piece-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .piece-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: var(--white);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .piece-action-btn:hover {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        /* Transform Controls */
+        .transform-controls {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--light);
+        }
+
+        .transform-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .transform-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .transform-sliders {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .slider-label {
+            width: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .slider-label.x { color: var(--danger); }
+        .slider-label.y { color: var(--success); }
+        .slider-label.z { color: var(--primary); }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--medium-gray);
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .slider-value {
+            width: 50px;
+            text-align: right;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            background: var(--light);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(139, 69, 19, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-gray);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--white);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.info .toast-icon { color: var(--primary); }
+
+        .toast-message {
+            font-size: 0.875rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--medium-gray);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+        }
+
+        /* Grid Helper */
+        .grid-toggle {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .switch {
+            width: 40px;
+            height: 20px;
+            background: var(--medium-gray);
+            border-radius: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .switch.active {
+            background: var(--primary);
+        }
+
+        .switch-knob {
+            width: 16px;
+            height: 16px;
+            background: var(--white);
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .switch.active .switch-knob {
+            left: 22px;
+        }
+
+        /* Decorative Elements */
+        .artifact-decoration {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23D2B48C" fill-opacity="0.1" d="M50,10 L60,30 L80,30 L65,45 L75,65 L50,50 L25,65 L35,45 L20,30 L40,30 Z"/></svg>') center/contain no-repeat;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .decoration-1 {
+            top: 100px;
+            left: 100px;
+            transform: rotate(15deg);
+        }
+
+        .decoration-2 {
+            bottom: 100px;
+            right: 100px;
+            transform: rotate(-15deg);
+        }
+
+        /* Selection Highlight */
+        .selection-highlight {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Multi-select indicator */
+        .multi-select-indicator {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Logo -->
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo"></div>
+            <h1 class="logo-text">Artifact Land</h1>
+            <span class="logo-subtitle">Archaeology Assembly Studio</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="tool-btn active" data-tool="select" title="Select">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+            <button class="tool-btn" data-tool="move" title="Move">
+                <i class="fas fa-arrows-alt"></i>
+            </button>
+            <button class="tool-btn" data-tool="rotate" title="Rotate">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="tool-btn" data-tool="scale" title="Scale">
+                <i class="fas fa-expand-arrows-alt"></i>
+            </button>
+            <div class="tool-separator"></div>
+            <button class="tool-btn" onclick="resetCamera()" title="Reset Camera">
+                <i class="fas fa-video"></i>
+            </button>
+            <button class="tool-btn" onclick="fitToView()" title="Fit to View">
+                <i class="fas fa-compress"></i>
+            </button>
+            <div class="tool-separator"></div>
+            <button class="tool-btn" onclick="autoAssemble()" title="Auto Assemble">
+                <i class="fas fa-magic"></i>
+            </button>
+            <button class="tool-btn" onclick="explodeView()" title="Explode View">
+                <i class="fas fa-bomb"></i>
+            </button>
+        </div>
+
+        <!-- Main Viewport -->
+        <div class="viewport">
+            <div id="canvas-container"></div>
+            
+            <!-- Decorative Elements -->
+            <div class="artifact-decoration decoration-1"></div>
+            <div class="artifact-decoration decoration-2"></div>
+            
+            <!-- Viewport Controls -->
+            <div class="viewport-controls">
+                <button class="view-btn" onclick="setView('front')" title="Front View">
+                    <i class="fas fa-square"></i>
+                </button>
+                <button class="view-btn" onclick="setView('top')" title="Top View">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="view-btn" onclick="setView('side')" title="Side View">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <button class="view-btn" onclick="setView('perspective')" title="Perspective">
+                    <i class="fas fa-cube"></i>
+                </button>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="info-title">Excavation Progress</div>
+                <div class="info-item">
+                    <span class="info-label">Artifacts:</span>
+                    <span class="info-value" id="object-count">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Selected:</span>
+                    <span class="info-value" id="selected-count">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Restored:</span>
+                    <span class="info-value" id="assembled-count">0</span>
+                </div>
+                <div class="selection-info">
+                    <div class="selection-hint">Click to select • Shift+Click for multi-select</div>
+                </div>
+            </div>
+
+            <!-- Grid Toggle -->
+            <div class="grid-toggle">
+                <div class="toggle-switch" onclick="toggleGrid()">
+                    <div class="switch" id="grid-switch">
+                        <div class="switch-knob"></div>
+                    </div>
+                    <span style="font-size: 0.875rem;">Grid</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Artifact Collection</div>
+                <div class="sidebar-subtitle">Upload and restore ancient artifacts</div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" onclick="document.getElementById('file-input').click()" 
+                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" 
+                 ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">
+                    <i class="fas fa-archway"></i>
+                </div>
+                <div class="upload-text">Click to upload or drag & drop</div>
+                <div class="upload-hint">GLB files only</div>
+                <input type="file" id="file-input" accept=".glb,.gltf" onchange="handleFileSelect(event)">
+            </div>
+
+            <!-- Pieces List -->
+            <div class="pieces-container" id="pieces-list">
+                <!-- Pieces will be dynamically added here -->
+            </div>
+
+            <!-- Transform Controls -->
+            <div class="transform-controls" id="transform-controls" style="display: none;">
+                <div class="transform-group">
+                    <div class="transform-label">Position</div>
+                    <div class="transform-sliders">
+                        <div class="slider-row">
+                            <span class="slider-label x">X</span>
+                            <input type="range" class="slider" id="pos-x" min="-10" max="10" step="0.1" value="0">
+                            <span class="slider-value" id="pos-x-val">0.0</span>
+                        </div>
+                        <div class="slider-row">
+                            <span class="slider-label y">Y</span>
+                            <input type="range" class="slider" id="pos-y" min="-10" max="10" step="0.1" value="0">
+                            <span class="slider-value" id="pos-y-val">0.0</span>
+                        </div>
+                        <div class="slider-row">
+                            <span class="slider-label z">Z</span>
+                            <input type="range" class="slider" id="pos-z" min="-10" max="10" step="0.1" value="0">
+                            <span class="slider-value" id="pos-z-val">0.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transform-group">
+                    <div class="transform-label">Rotation</div>
+                    <div class="transform-sliders">
+                        <div class="slider-row">
+                            <span class="slider-label x">X</span>
+                            <input type="range" class="slider" id="rot-x" min="0" max="360" step="1" value="0">
+                            <span class="slider-value" id="rot-x-val">0°</span>
+                        </div>
+                        <div class="slider-row">
+                            <span class="slider-label y">Y</span>
+                            <input type="range" class="slider" id="rot-y" min="0" max="360" step="1" value="0">
+                            <span class="slider-value" id="rot-y-val">0°</span>
+                        </div>
+                        <div class="slider-row">
+                            <span class="slider-label z">Z</span>
+                            <input type="range" class="slider" id="rot-z" min="0" max="360" step="1" value="0">
+                            <span class="slider-value" id="rot-z-val">0°</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="action-btn btn-secondary" onclick="resetTransform()">
+                    <i class="fas fa-undo"></i>
+                    Reset
+                </button>
+                <button class="action-btn btn-primary" onclick="checkAssembly()">
+                    <i class="fas fa-check"></i>
+                    Check
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="toast-message" id="toast-message">Message</div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Unearthing artifacts...</div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let transformControls;
+        let gridHelper;
+        let pieces = [];
+        let selectedObjects = new Set();
+        let hoveredObject = null;
+        let currentTool = 'select';
+        let raycaster, mouse;
+        let assembledPieces = new Set();
+        let selectionOutlines = new Map();
+        let hoverOutline = null;
+
+        // Initialize the application
+        function init() {
+            initThreeJS();
+            initEventListeners();
+            animate();
+        }
+
+        // Initialize Three.js scene
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xFFFFFF);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 5, 5);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                preserveDrawingBuffer: true
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+            
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Transform Controls
+            transformControls = new THREE.TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('change', updateTransformValues);
+            transformControls.addEventListener('dragging-changed', function(event) {
+                controls.enabled = !event.value;
+            });
+            scene.add(transformControls);
+            
+            // Enhanced Lighting for better color visibility
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+            
+            // Add additional fill light for better color visibility
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+            
+            // Grid Helper
+            gridHelper = new THREE.GridHelper(20, 20, 0xD2B48C, 0xF5DEB3);
+            scene.add(gridHelper);
+            
+            // Raycaster for selection
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            // Tool selection
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTool = this.dataset.tool;
+                    updateTransformMode();
+                    updateCursor();
+                });
+            });
+            
+            // Mouse events for selection
+            renderer.domElement.addEventListener('click', onMouseClick);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+            
+            // Transform sliders
+            ['pos-x', 'pos-y', 'pos-z', 'rot-x', 'rot-y', 'rot-z'].forEach(id => {
+                const slider = document.getElementById(id);
+                if (slider) {
+                    slider.addEventListener('input', onSliderChange);
+                }
+            });
+        }
+
+        // Update cursor based on tool
+        function updateCursor() {
+            const container = document.getElementById('canvas-container');
+            container.className = '';
+            switch(currentTool) {
+                case 'move':
+                    container.classList.add('move-mode');
+                    break;
+                case 'rotate':
+                    container.classList.add('rotate-mode');
+                    break;
+                case 'scale':
+                    container.classList.add('scale-mode');
+                    break;
+            }
+        }
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                loadGLBFile(file);
+            }
+        }
+
+        // Handle drag and drop
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const file = event.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+                loadGLBFile(file);
+            } else {
+                showToast('Please upload a GLB or GLTF file', 'error');
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        // Load GLB file with proper material handling
+        function loadGLBFile(file) {
+            showLoading(true);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.GLTFLoader();
+                loader.parse(e.target.result, '', function(gltf) {
+                    processLoadedModel(gltf.scene, gltf);
+                    showLoading(false);
+                    showToast('Artifacts unearthed successfully!', 'success');
+                }, function(error) {
+                    console.error('Error loading model:', error);
+                    showLoading(false);
+                    showToast('Error unearthing artifacts', 'error');
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Process loaded model with proper material preservation
+        function processLoadedModel(model, gltf) {
+            // Clear existing pieces
+            clearScene();
+            
+            // Process materials and textures
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    // Ensure proper material properties
+                    if (child.material) {
+                        // Handle different material types
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                if (mat.map) mat.map.encoding = THREE.sRGBEncoding;
+                                if (mat.emissiveMap) mat.emissiveMap.encoding = THREE.sRGBEncoding;
+                                if (mat.normalMap) mat.normalMap.encoding = THREE.LinearEncoding;
+                                mat.needsUpdate = true;
+                            });
+                        } else {
+                            if (child.material.map) child.material.map.encoding = THREE.sRGBEncoding;
+                            if (child.material.emissiveMap) child.material.emissiveMap.encoding = THREE.sRGBEncoding;
+                            if (child.material.normalMap) child.material.normalMap.encoding = THREE.LinearEncoding;
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                }
+            });
+            
+            // Extract individual meshes as pieces
+            model.traverse((child) => {
+                if (child.isMesh && child.geometry) {
+                    // Create a deep clone to preserve materials
+                    const piece = new THREE.Mesh(
+                        child.geometry.clone(),
+                        Array.isArray(child.material) 
+                            ? child.material.map(mat => mat.clone())
+                            : child.material.clone()
+                    );
+                    
+                    // Copy transform and userData
+                    piece.position.copy(child.position);
+                    piece.rotation.copy(child.rotation);
+                    piece.scale.copy(child.scale);
+                    
+                    piece.userData = {
+                        id: `artifact-${pieces.length}`,
+                        name: child.name || `Artifact ${pieces.length + 1}`,
+                        originalPosition: child.position.clone(),
+                        originalRotation: child.rotation.clone(),
+                        originalScale: child.scale.clone()
+                    };
+                    
+                    // Enable shadows
+                    piece.castShadow = true;
+                    piece.receiveShadow = true;
+                    
+                    // Create selection outline
+                    const outlineMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xFFD700,
+                        transparent: true,
+                        opacity: 0.8,
+                        side: THREE.BackSide
+                    });
+                    const outline = new THREE.Mesh(child.geometry.clone(), outlineMaterial);
+                    outline.scale.multiplyScalar(1.05);
+                    piece.userData.outline = outline;
+                    
+                    pieces.push(piece);
+                    scene.add(piece);
+                }
+            });
+            
+            // If no meshes found, use the whole model as one piece
+            if (pieces.length === 0) {
+                const piece = model.clone();
+                piece.userData = {
+                    id: 'artifact-0',
+                    name: 'Ancient Artifact',
+                    originalPosition: piece.position.clone(),
+                    originalRotation: piece.rotation.clone(),
+                    originalScale: piece.scale.clone()
+                };
+                piece.castShadow = true;
+                piece.receiveShadow = true;
+                pieces.push(piece);
+                scene.add(piece);
+            }
+            
+            // Update UI
+            updatePiecesList();
+            updateInfo();
+            explodeView();
+        }
+
+        // Clear scene
+        function clearScene() {
+            // Clear selection outlines
+            selectionOutlines.forEach(outline => scene.remove(outline));
+            selectionOutlines.clear();
+            
+            if (hoverOutline) {
+                scene.remove(hoverOutline);
+                hoverOutline = null;
+            }
+            
+            pieces.forEach(piece => {
+                scene.remove(piece);
+            });
+            pieces = [];
+            selectedObjects.clear();
+            assembledPieces.clear();
+            updatePiecesList();
+            updateInfo();
+        }
+
+        // Update pieces list in sidebar
+        function updatePiecesList() {
+            const container = document.getElementById('pieces-list');
+            container.innerHTML = '';
+            
+            pieces.forEach((piece, index) => {
+                const item = document.createElement('div');
+                item.className = 'piece-item';
+                if (selectedObjects.has(piece)) item.classList.add('selected');
+                if (assembledPieces.has(piece)) item.classList.add('assembled');
+                
+                // Add multi-select indicator
+                if (selectedObjects.size > 1 && selectedObjects.has(piece)) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'multi-select-indicator';
+                    indicator.textContent = Array.from(selectedObjects).indexOf(piece) + 1;
+                    item.appendChild(indicator);
+                }
+                
+                item.innerHTML = `
+                    <div class="piece-icon">${index + 1}</div>
+                    <div class="piece-info">
+                        <div class="piece-name">${piece.userData.name}</div>
+                        <div class="piece-status">${assembledPieces.has(piece) ? 'Restored' : 'Fragment'}</div>
+                    </div>
+                    <div class="piece-actions">
+                        <button class="piece-action-btn" onclick="focusPiece(${index})" title="Focus">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button class="piece-action-btn" onclick="toggleVisibility(${index})" title="Toggle Visibility">
+                            <i class="fas fa-eye${piece.visible ? '' : '-slash'}"></i>
+                        </button>
+                    </div>
+                `;
+                
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.piece-action-btn')) {
+                        if (e.shiftKey) {
+                            toggleSelection(piece);
+                        } else {
+                            selectObject(piece);
+                        }
+                    }
+                });
+                
+                container.appendChild(item);
+            });
+        }
+
+        // Mouse click handler with enhanced selection
+        function onMouseClick(event) {
+            if (currentTool !== 'select') return;
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(pieces, true);
+            
+            if (intersects.length > 0) {
+                // Find the top-level parent piece
+                let object = intersects[0].object;
+                while (object.parent && !pieces.includes(object)) {
+                    object = object.parent;
+                }
+                if (pieces.includes(object)) {
+                    if (event.shiftKey) {
+                        toggleSelection(object);
+                    } else {
+                        selectObject(object);
+                    }
+                }
+            } else if (!event.shiftKey) {
+                clearSelection();
+            }
+        }
+
+        // Mouse move handler for hover effects
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(pieces, true);
+            
+            // Remove previous hover outline
+            if (hoverOutline) {
+                scene.remove(hoverOutline);
+                hoverOutline = null;
+            }
+            
+            if (intersects.length > 0) {
+                // Find the top-level parent piece
+                let object = intersects[0].object;
+                while (object.parent && !pieces.includes(object)) {
+                    object = object.parent;
+                }
+                if (pieces.includes(object) && !selectedObjects.has(object)) {
+                    // Add hover outline
+                    const hoverMaterial = new THREE.MeshBasicMaterial({
+                        color: 0x87CEEB,
+                        transparent: true,
+                        opacity: 0.5,
+                        side: THREE.BackSide
+                    });
+                    hoverOutline = new THREE.Mesh(object.geometry.clone(), hoverMaterial);
+                    hoverOutline.position.copy(object.position);
+                    hoverOutline.rotation.copy(object.rotation);
+                    hoverOutline.scale.copy(object.scale).multiplyScalar(1.03);
+                    scene.add(hoverOutline);
+                    
+                    // Change cursor
+                    document.getElementById('canvas-container').style.cursor = 'pointer';
+                }
+            } else {
+                document.getElementById('canvas-container').style.cursor = currentTool === 'select' ? 'crosshair' : '';
+            }
+        }
+
+        // Select object
+        function selectObject(object) {
+            clearSelection();
+            selectedObjects.add(object);
+            updateSelectionVisuals();
+            updateTransformMode();
+            updateTransformValues();
+            updatePiecesList();
+            updateInfo();
+            
+            // Show transform controls
+            if (selectedObjects.size > 0) {
+                document.getElementById('transform-controls').style.display = 'block';
+                transformControls.attach(object);
+            }
+        }
+
+        // Toggle selection for multi-select
+        function toggleSelection(object) {
+            if (selectedObjects.has(object)) {
+                selectedObjects.delete(object);
+            } else {
+                selectedObjects.add(object);
+            }
+            updateSelectionVisuals();
+            updatePiecesList();
+            updateInfo();
+            
+            // Update transform controls
+            if (selectedObjects.size === 1) {
+                transformControls.attach(Array.from(selectedObjects)[0]);
+            } else {
+                transformControls.detach();
+            }
+        }
+
+        // Clear selection
+        function clearSelection() {
+            selectedObjects.clear();
+            updateSelectionVisuals();
+            transformControls.detach();
+            document.getElementById('transform-controls').style.display = 'none';
+            updatePiecesList();
+            updateInfo();
+        }
+
+        // Update selection visuals
+        function updateSelectionVisuals() {
+            // Clear previous outlines
+            selectionOutlines.forEach(outline => scene.remove(outline));
+            selectionOutlines.clear();
+            
+            // Add outlines for selected objects
+            selectedObjects.forEach(object => {
+                if (object.userData.outline) {
+                    const outline = object.userData.outline.clone();
+                    outline.position.copy(object.position);
+                    outline.rotation.copy(object.rotation);
+                    outline.scale.copy(object.scale);
+                    scene.add(outline);
+                    selectionOutlines.set(object, outline);
+                }
+            });
+        }
+
+        // Update transform mode
+        function updateTransformMode() {
+            if (selectedObjects.size !== 1) return;
+            
+            const object = Array.from(selectedObjects)[0];
+            switch(currentTool) {
+                case 'move':
+                    transformControls.setMode('translate');
+                    break;
+                case 'rotate':
+                    transformControls.setMode('rotate');
+                    break;
+                case 'scale':
+                    transformControls.setMode('scale');
+                    break;
+                default:
+                    transformControls.setMode('translate');
+            }
+        }
+
+        // Update transform values from sliders
+        function onSliderChange(event) {
+            if (selectedObjects.size !== 1) return;
+            
+            const object = Array.from(selectedObjects)[0];
+            const id = event.target.id;
+            const value = parseFloat(event.target.value);
+            
+            if (id.startsWith('pos-')) {
+                const axis = id.split('-')[1];
+                object.position[axis] = value;
+                document.getElementById(`${id}-val`).textContent = value.toFixed(1);
+            } else if (id.startsWith('rot-')) {
+                const axis = id.split('-')[1];
+                object.rotation[axis] = THREE.MathUtils.degToRad(value);
+                document.getElementById(`${id}-val`).textContent = value + '°';
+            }
+            
+            updateSelectionVisuals();
+        }
+
+        // Update transform values from object
+        function updateTransformValues() {
+            if (selectedObjects.size !== 1) return;
+            
+            const object = Array.from(selectedObjects)[0];
+            
+            // Position
+            document.getElementById('pos-x').value = object.position.x;
+            document.getElementById('pos-x-val').textContent = object.position.x.toFixed(1);
+            document.getElementById('pos-y').value = object.position.y;
+            document.getElementById('pos-y-val').textContent = object.position.y.toFixed(1);
+            document.getElementById('pos-z').value = object.position.z;
+            document.getElementById('pos-z-val').textContent = object.position.z.toFixed(1);
+            
+            // Rotation
+            document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(object.rotation.x);
+            document.getElementById('rot-x-val').textContent = Math.round(THREE.MathUtils.radToDeg(object.rotation.x)) + '°';
+            document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(object.rotation.y);
+            document.getElementById('rot-y-val').textContent = Math.round(THREE.MathUtils.radToDeg(object.rotation.y)) + '°';
+            document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(object.rotation.z);
+            document.getElementById('rot-z-val').textContent = Math.round(THREE.MathUtils.radToDeg(object.rotation.z)) + '°';
+        }
+
+        // Focus on piece
+        function focusPiece(index) {
+            const piece = pieces[index];
+            if (piece) {
+                selectObject(piece);
+                
+                // Move camera to focus on piece
+                const box = new THREE.Box3().setFromObject(piece);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const fov = camera.fov * (Math.PI / 180);
+                let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+                cameraZ *= 2;
+                
+                camera.position.set(center.x, center.y, center.z + cameraZ);
+                controls.target.copy(center);
+                controls.update();
+            }
+        }
+
+        // Toggle visibility
+        function toggleVisibility(index) {
+            const piece = pieces[index];
+            if (piece) {
+                piece.visible = !piece.visible;
+                updatePiecesList();
+            }
+        }
+
+        // Reset transform
+        function resetTransform() {
+            if (selectedObjects.size === 0) return;
+            
+            selectedObjects.forEach(object => {
+                object.position.copy(object.userData.originalPosition);
+                object.rotation.copy(object.userData.originalRotation);
+                object.scale.copy(object.userData.originalScale);
+            });
+            
+            updateTransformValues();
+            updateSelectionVisuals();
+            showToast('Artifact position reset', 'info');
+        }
+
+        // Explode view
+        function explodeView() {
+            const explosionDistance = 3;
+            pieces.forEach((piece, index) => {
+                const angle = (index / pieces.length) * Math.PI * 2;
+                piece.position.x = Math.cos(angle) * explosionDistance;
+                piece.position.z = Math.sin(angle) * explosionDistance;
+                piece.position.y = 0;
+            });
+            updateSelectionVisuals();
+            showToast('Fragments separated', 'info');
+        }
+
+        // Auto assemble
+        function autoAssemble() {
+            pieces.forEach(piece => {
+                piece.position.copy(piece.userData.originalPosition);
+                piece.rotation.copy(piece.userData.originalRotation);
+                piece.scale.copy(piece.userData.originalScale);
+                assembledPieces.add(piece);
+            });
+            updateSelectionVisuals();
+            updatePiecesList();
+            updateInfo();
+            showToast('Artifacts restored!', 'success');
+        }
+
+        // Check assembly
+        function checkAssembly() {
+            let allAssembled = true;
+            const tolerance = 0.5;
+            
+            pieces.forEach(piece => {
+                const distance = piece.position.distanceTo(piece.userData.originalPosition);
+                if (distance < tolerance) {
+                    assembledPieces.add(piece);
+                } else {
+                    allAssembled = false;
+                }
+            });
+            
+            updatePiecesList();
+            updateInfo();
+            
+            if (allAssembled) {
+                showToast('Perfect restoration! All artifacts in place!', 'success');
+            } else {
+                showToast(`${assembledPieces.size}/${pieces.length} artifacts correctly positioned`, 'info');
+            }
+        }
+
+        // Set camera view
+        function setView(view) {
+            const distance = 10;
+            
+            switch(view) {
+                case 'front':
+                    camera.position.set(0, 0, distance);
+                    controls.target.set(0, 0, 0);
+                    break;
+                case 'top':
+                    camera.position.set(0, distance, 0);
+                    controls.target.set(0, 0, 0);
+                    break;
+                case 'side':
+                    camera.position.set(distance, 0, 0);
+                    controls.target.set(0, 0, 0);
+                    break;
+                case 'perspective':
+                    camera.position.set(5, 5, 5);
+                    controls.target.set(0, 0, 0);
+                    break;
+            }
+            
+            controls.update();
+        }
+
+        // Reset camera
+        function resetCamera() {
+            camera.position.set(5, 5, 5);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            showToast('Camera reset', 'info');
+        }
+
+        // Fit to view
+        function fitToView() {
+            if (pieces.length === 0) return;
+            
+            const box = new THREE.Box3();
+            pieces.forEach(piece => {
+                if (piece.visible) {
+                    box.expandByObject(piece);
+                }
+            });
+            
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            cameraZ *= 1.5;
+            
+            camera.position.set(center.x, center.y, center.z + cameraZ);
+            controls.target.copy(center);
+            controls.update();
+            
+            showToast('Fitted to view', 'info');
+        }
+
+        // Toggle grid
+        function toggleGrid() {
+            const switchEl = document.getElementById('grid-switch');
+            switchEl.classList.toggle('active');
+            gridHelper.visible = switchEl.classList.contains('active');
+        }
+
+        // Update info panel
+        function updateInfo() {
+            document.getElementById('object-count').textContent = pieces.length;
+            document.getElementById('selected-count').textContent = selectedObjects.size;
+            document.getElementById('assembled-count').textContent = assembledPieces.size;
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = toast.querySelector('.toast-icon i');
+            
+            toast.className = `toast ${type}`;
+            toastMessage.textContent = message;
+            
+            // Update icon
+            switch(type) {
+                case 'success':
+                    toastIcon.className = 'fas fa-check-circle';
+                    break;
+                case 'error':
+                    toastIcon.className = 'fas fa-exclamation-circle';
+                    break;
+                default:
+                    toastIcon.className = 'fas fa-info-circle';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show/hide loading overlay
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('active');
+            } else {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Handle window resize
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
