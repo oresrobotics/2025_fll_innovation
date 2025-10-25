@@ -70,7 +70,85 @@
       flex-direction: column;
       gap: 5px;
     }
-    .lightBtn {
+    #downloadBtn {
+      position: absolute;
+      top: 170px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #downloadBtn:hover { background: #333; }
+    #downloadBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #sliceModeBtn {
+      position: absolute;
+      top: 56px;
+      right: 10px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #sliceModeBtn:hover { background: #333; }
+    #sliceModeBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #slicingControls {
+      position: absolute;
+      top: 96px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 180px;
+    }
+    #slicingControls.hidden {
+      display: none;
+    }
+    .sliceBtn {
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .sliceBtn:hover { background: #333; }
+    .sliceControl {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .sliceControl label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .sliceControl input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #zoomControls {
       padding: 6px 10px;
       background: #2b2b2b;
       color: #fff;
@@ -408,9 +486,26 @@
     <button class="lightBtn" id="fullBrightBtn">Full Brightness</button>
     <button class="lightBtn active" id="resetLightBtn">Reset Lighting</button>
   </div>
+  <button id="downloadBtn" disabled>Download GLB</button>
   <div id="zoomControls">
     <button class="zoomBtn" id="zoomIn" title="Zoom In">+</button>
     <button class="zoomBtn" id="zoomOut" title="Zoom Out">−</button>
+  </div>
+  <button id="sliceModeBtn">Slicing Mode</button>
+  <div id="slicingControls" class="hidden">
+    <div class="sliceControl">
+      <label>Position</label>
+      <input type="range" id="slicePosition" min="-1" max="1" step="0.01" value="0">
+    </div>
+    <div class="sliceControl">
+      <label>Axis</label>
+      <select id="sliceAxis" style="padding: 4px; border-radius: 4px; background: #1a1a1a; color: #fff; border: 1px solid #555;">
+        <option value="x">X-Axis</option>
+        <option value="y" selected>Y-Axis</option>
+        <option value="z">Z-Axis</option>
+      </select>
+    </div>
+    <button class="sliceBtn" id="flipSliceBtn">Flip Direction</button>
   </div>
   <script type="importmap">
     {
@@ -423,6 +518,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { DragControls } from 'three/addons/controls/DragControls.js';
     const scene = new THREE.Scene();
@@ -438,6 +534,7 @@
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.3;
     renderer.shadowMap.enabled = false; // Disable shadows
+    renderer.localClippingEnabled = true; // Enable clipping
     document.body.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -478,6 +575,8 @@
     let dragControls = null;
     let originalPositions = new Map();
     let originalRotations = new Map();
+    let clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    let slicingEnabled = false;
 
     function clearCurrentModel() {
       if (currentModel) {
@@ -566,10 +665,14 @@
         });
       }
       
-      // Enable assemble button
+      // Enable assemble and download buttons
       const assembleBtn = document.getElementById('assembleBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
       if (draggableObjects.length > 1) {
         assembleBtn.disabled = false;
+      }
+      if (draggableObjects.length > 0) {
+        downloadBtn.disabled = false;
       }
 
       if (dragControls) {
@@ -932,6 +1035,117 @@
       
       resetLightBtn.classList.add('active');
       fullBrightBtn.classList.remove('active');
+    });
+    
+    // Download button
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.addEventListener('click', () => {
+      if (!currentModel) return;
+      
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Exporting...';
+      
+      const exporter = new GLTFExporter();
+      
+      exporter.parse(
+        currentModel,
+        (gltf) => {
+          // Convert to JSON string
+          const output = JSON.stringify(gltf, null, 2);
+          
+          // Create blob and download
+          const blob = new Blob([output], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'modified-artifact.gltf';
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = 'Download GLB';
+        },
+        (error) => {
+          console.error('Export error:', error);
+          alert('Failed to export model');
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = 'Download GLB';
+        },
+        { binary: false }
+      );
+    });
+    
+    // Slicing mode
+    const sliceModeBtn = document.getElementById('sliceModeBtn');
+    const slicingControls = document.getElementById('slicingControls');
+    const slicePosition = document.getElementById('slicePosition');
+    const sliceAxis = document.getElementById('sliceAxis');
+    const flipSliceBtn = document.getElementById('flipSliceBtn');
+    let sliceDirection = -1;
+    
+    sliceModeBtn.addEventListener('click', () => {
+      slicingEnabled = !slicingEnabled;
+      
+      if (slicingEnabled) {
+        sliceModeBtn.classList.add('active');
+        sliceModeBtn.textContent = 'Exit Slicing';
+        slicingControls.classList.remove('hidden');
+        updateSlicing();
+      } else {
+        sliceModeBtn.classList.remove('active');
+        sliceModeBtn.textContent = 'Slicing Mode';
+        slicingControls.classList.add('hidden');
+        // Disable clipping on all materials
+        if (currentModel) {
+          currentModel.traverse(obj => {
+            if (obj.isMesh && obj.material) {
+              const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+              materials.forEach(mat => {
+                mat.clippingPlanes = [];
+                mat.needsUpdate = true;
+              });
+            }
+          });
+        }
+      }
+    });
+    
+    function updateSlicing() {
+      if (!slicingEnabled || !currentModel) return;
+      
+      const pos = parseFloat(slicePosition.value);
+      const axis = sliceAxis.value;
+      
+      // Set plane normal based on axis
+      if (axis === 'x') {
+        clippingPlane.normal.set(sliceDirection, 0, 0);
+      } else if (axis === 'y') {
+        clippingPlane.normal.set(0, sliceDirection, 0);
+      } else if (axis === 'z') {
+        clippingPlane.normal.set(0, 0, sliceDirection);
+      }
+      
+      clippingPlane.constant = pos;
+      
+      // Apply clipping plane to all materials
+      currentModel.traverse(obj => {
+        if (obj.isMesh && obj.material) {
+          const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+          materials.forEach(mat => {
+            mat.clippingPlanes = [clippingPlane];
+            mat.clipShadows = true;
+            mat.needsUpdate = true;
+          });
+        }
+      });
+    }
+    
+    slicePosition.addEventListener('input', updateSlicing);
+    sliceAxis.addEventListener('change', updateSlicing);
+    
+    flipSliceBtn.addEventListener('click', () => {
+      sliceDirection *= -1;
+      updateSlicing();
     });
     
     // Zoom controls
