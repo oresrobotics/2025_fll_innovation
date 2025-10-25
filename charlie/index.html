@@ -173,6 +173,136 @@
       border-radius: 6px;
       backdrop-filter: blur(5px);
     }
+    #authScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #authScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .authContainer {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .authContainer h2 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 28px;
+      font-weight: 300;
+    }
+    .authContainer .authSubtitle {
+      color: #666;
+      margin: 0 0 32px 0;
+      font-size: 14px;
+    }
+    .authForm {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .authForm.hidden {
+      display: none;
+    }
+    .formGroup {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .formGroup label {
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .formGroup input {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: sans-serif;
+      transition: border-color 0.3s;
+    }
+    .formGroup input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .authBtn {
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 8px;
+    }
+    .authBtn:hover {
+      background: #5568d3;
+    }
+    .authToggle {
+      text-align: center;
+      margin-top: 24px;
+      color: #666;
+      font-size: 14px;
+    }
+    .authToggle a {
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .authToggle a:hover {
+      text-decoration: underline;
+    }
+    .guestBtn {
+      margin-top: 16px;
+      padding: 12px;
+      background: transparent;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .guestBtn:hover {
+      background: #667eea;
+      color: white;
+    }
+    #signOutBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    #signOutBtn:hover { 
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
     #zoomControls {
       position: absolute;
       top: 10px;
@@ -201,7 +331,58 @@
   </style>
 </head>
 <body>
-  <div id="homeScreen">
+  <div id="authScreen">
+    <div class="authContainer">
+      <!-- Sign In Form -->
+      <div id="signInForm" class="authForm">
+        <h2>Welcome Back</h2>
+        <p class="authSubtitle">Sign in to continue your artifact exploration</p>
+        <div class="formGroup">
+          <label for="signInEmail">Email</label>
+          <input type="email" id="signInEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="formGroup">
+          <label for="signInPassword">Password</label>
+          <input type="password" id="signInPassword" placeholder="Enter your password" required>
+        </div>
+        <button class="authBtn" id="signInBtn">Sign In</button>
+        <button class="guestBtn" id="continueAsGuest1">Continue as Guest</button>
+        <div class="authToggle">
+          Don't have an account? <a id="showSignUp">Sign up</a>
+        </div>
+      </div>
+      
+      <!-- Sign Up Form -->
+      <div id="signUpForm" class="authForm hidden">
+        <h2>Create Account</h2>
+        <p class="authSubtitle">Join us in reconstructing history</p>
+        <div class="formGroup">
+          <label for="signUpName">Full Name</label>
+          <input type="text" id="signUpName" placeholder="John Doe" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpEmail">Email</label>
+          <input type="email" id="signUpEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpPassword">Password</label>
+          <input type="password" id="signUpPassword" placeholder="Create a password" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpPasswordConfirm">Confirm Password</label>
+          <input type="password" id="signUpPasswordConfirm" placeholder="Confirm your password" required>
+        </div>
+        <button class="authBtn" id="signUpBtn">Sign Up</button>
+        <button class="guestBtn" id="continueAsGuest2">Continue as Guest</button>
+        <div class="authToggle">
+          Already have an account? <a id="showSignIn">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="homeScreen" class="hidden">
+    <button id="signOutBtn">Sign Out</button>
     <div class="homeContent">
       <h1>Archaeological Artifact Viewer</h1>
       <p>View, rotate, and reassemble 3D archaeological artifacts. Load your GLB model to explore fragments with interactive controls.</p>
@@ -432,10 +613,34 @@
       }
     }
 
-    // Home screen
+    // Get all screen elements first
+    const authScreen = document.getElementById('authScreen');
     const homeScreen = document.getElementById('homeScreen');
-    const homeLoadBtn = document.getElementById('homeLoadBtn');
-    const homeDragBtn = document.getElementById('homeDragBtn');
+    
+    // Auth screen elements
+    const signInForm = document.getElementById('signInForm');
+    const signUpForm = document.getElementById('signUpForm');
+    const showSignUpLink = document.getElementById('showSignUp');
+    const showSignInLink = document.getElementById('showSignIn');
+    const signInBtn = document.getElementById('signInBtn');
+    const signUpBtn = document.getElementById('signUpBtn');
+    const continueAsGuest1 = document.getElementById('continueAsGuest1');
+    const continueAsGuest2 = document.getElementById('continueAsGuest2');
+    
+    function hideAuthScreen() {
+      authScreen.classList.add('hidden');
+      setTimeout(() => {
+        authScreen.style.display = 'none';
+      }, 500);
+    }
+    
+    function showHomeScreen() {
+      hideAuthScreen();
+      setTimeout(() => {
+        homeScreen.style.display = 'flex';
+        homeScreen.classList.remove('hidden');
+      }, 500);
+    }
     
     function hideHomeScreen() {
       homeScreen.classList.add('hidden');
@@ -443,6 +648,83 @@
         homeScreen.style.display = 'none';
       }, 500);
     }
+    
+    // Toggle between sign in and sign up
+    showSignUpLink.addEventListener('click', () => {
+      signInForm.classList.add('hidden');
+      signUpForm.classList.remove('hidden');
+    });
+    
+    showSignInLink.addEventListener('click', () => {
+      signUpForm.classList.add('hidden');
+      signInForm.classList.remove('hidden');
+    });
+    
+    // Sign in
+    signInBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signInEmail').value;
+      const password = document.getElementById('signInPassword').value;
+      
+      if (email && password) {
+        console.log('Sign in:', email);
+        // Store user info (frontend only)
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', email.split('@')[0]);
+        showHomeScreen();
+      } else {
+        alert('Please fill in all fields');
+      }
+    });
+    
+    // Sign up
+    signUpBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signUpName').value;
+      const email = document.getElementById('signUpEmail').value;
+      const password = document.getElementById('signUpPassword').value;
+      const passwordConfirm = document.getElementById('signUpPasswordConfirm').value;
+      
+      if (name && email && password && passwordConfirm) {
+        if (password !== passwordConfirm) {
+          alert('Passwords do not match');
+          return;
+        }
+        console.log('Sign up:', name, email);
+        // Store user info (frontend only)
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', name);
+        showHomeScreen();
+      } else {
+        alert('Please fill in all fields');
+      }
+    });
+    
+    // Continue as guest
+    continueAsGuest1.addEventListener('click', () => {
+      localStorage.setItem('userEmail', 'guest');
+      localStorage.setItem('userName', 'Guest');
+      showHomeScreen();
+    });
+    
+    continueAsGuest2.addEventListener('click', () => {
+      localStorage.setItem('userEmail', 'guest');
+      localStorage.setItem('userName', 'Guest');
+      showHomeScreen();
+    });
+    
+    // Check if user is already logged in
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+      // Already logged in, skip auth screen
+      hideAuthScreen();
+      homeScreen.style.display = 'flex';
+      homeScreen.classList.remove('hidden');
+    }
+    
+    // Home screen buttons
+    const homeLoadBtn = document.getElementById('homeLoadBtn');
+    const homeDragBtn = document.getElementById('homeDragBtn');
     
     homeLoadBtn.addEventListener('click', () => {
       upload.click();
@@ -457,6 +739,32 @@
     homeIconBtn.addEventListener('click', () => {
       homeScreen.style.display = 'flex';
       homeScreen.classList.remove('hidden');
+    });
+    
+    // Sign out button
+    const signOutBtn = document.getElementById('signOutBtn');
+    signOutBtn.addEventListener('click', () => {
+      // Clear user data
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userName');
+      
+      // Hide all screens
+      homeScreen.classList.add('hidden');
+      homeScreen.style.display = 'none';
+      
+      // Show auth screen and reset to sign in form
+      authScreen.style.display = 'flex';
+      authScreen.classList.remove('hidden');
+      signUpForm.classList.add('hidden');
+      signInForm.classList.remove('hidden');
+      
+      // Clear form fields
+      document.getElementById('signInEmail').value = '';
+      document.getElementById('signInPassword').value = '';
+      document.getElementById('signUpName').value = '';
+      document.getElementById('signUpEmail').value = '';
+      document.getElementById('signUpPassword').value = '';
+      document.getElementById('signUpPasswordConfirm').value = '';
     });
     
     // File input
