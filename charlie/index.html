@@ -2,509 +2,405 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GLB Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLB Viewer (Fixed)</title>
   <style>
+    html, body { height: 100%; }
     body {
       margin: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-      background-color: #ffffff;
-    }
-    #upload { display: none; }
-    #loadBtn {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      padding: 6px 10px;
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #loadBtn:hover { background: #333; }
-    #assembleBtn {
-      position: absolute;
-      top: 50px;
-      left: 10px;
-      z-index: 10;
-      padding: 6px 10px;
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #assembleBtn:hover { background: #333; }
-    #assembleBtn:disabled {
-      background: #1a1a1a;
-      color: #666;
-      cursor: not-allowed;
-    }
-    #lightingControls {
-      position: absolute;
-      top: 90px;
-      left: 10px;
-      z-index: 10;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #111;
       display: flex;
       flex-direction: column;
-      gap: 5px;
     }
-    .lightBtn {
-      padding: 6px 10px;
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .lightBtn:hover { background: #333; }
-    .lightBtn.active {
-      background: #4a90e2;
-      border-color: #4a90e2;
-    }
-    #zoomControls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 10;
+    #toolbar {
       display: flex;
-      gap: 5px;
-    }
-    .zoomBtn {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      display: flex;
+      gap: 12px;
       align-items: center;
-      justify-content: center;
+      padding: 10px 12px;
+      background: #1e1e1e;
+      color: #ddd;
+      border-bottom: 1px solid #2a2a2a;
     }
-    .zoomBtn:hover { background: #333; }
-    .zoomBtn:active { background: #444; }
+    .btn {
+      padding: 8px 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn:hover { background: #2563eb; }
+    #viewer {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      background: #e9ecef;
+      overflow: hidden;
+    }
+    #dropHint {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #4b5563; pointer-events: none;
+      font-size: 14px; text-align: center;
+    }
+    #file { display: none; }
   </style>
 </head>
 <body>
-  <input type="file" id="upload" accept=".glb,.gltf" />
-  <button id="loadBtn">Load model…</button>
-  <button id="assembleBtn" disabled>Auto-assemble</button>
-  <div id="lightingControls">
-    <button class="lightBtn" id="fullBrightBtn">Full Brightness</button>
-    <button class="lightBtn active" id="resetLightBtn">Reset Lighting</button>
+  <div id="toolbar">
+    <button class="btn" id="openBtn">Open GLBs</button>
+    <button class="btn" id="rotLeft">⟲ Rotate -15°</button>
+    <button class="btn" id="rotRight">⟳ Rotate +15°</button>
+    <span id="status">Drop .glb files here or click Open GLBs</span>
+    <span id="selectedLabel" style="margin-left:auto">Selected: None</span>
+    <input type="file" id="file" accept=".glb,.gltf" multiple />
   </div>
-  <div id="zoomControls">
-    <button class="zoomBtn" id="zoomIn" title="Zoom In">+</button>
-    <button class="zoomBtn" id="zoomOut" title="Zoom Out">−</button>
+  <div id="viewer">
+    <div id="dropHint">Drop .glb here • Uses proper PBR lighting and color space</div>
   </div>
+
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
     }
+  }
   </script>
   <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { DragControls } from 'three/addons/controls/DragControls.js';
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/DRACOLoader.js';
+    import { KTX2Loader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/KTX2Loader.js';
+    import { RoomEnvironment } from 'https://unpkg.com/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
+    import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1, 3);
+    const container = document.getElementById('viewer');
+    const statusEl = document.getElementById('status');
+    const dropHint = document.getElementById('dropHint');
+    const openBtn = document.getElementById('openBtn');
+    const fileInput = document.getElementById('file');
+    const selectedLabel = document.getElementById('selectedLabel');
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
-    renderer.shadowMap.enabled = false; // Disable shadows
-    document.body.appendChild(renderer.domElement);
+    renderer.toneMappingExposure = 1.0;
+    renderer.outputColorSpace = THREE.SRGBColorSpace; // critical for correct texture color
+    container.appendChild(renderer.domElement);
+
+    // Scene & camera
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9ecef);
+
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.01, 2000);
+    camera.position.set(3, 2, 5);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.enablePan = true;
-    controls.screenSpacePanning = true;
-    controls.minDistance = 0.1;
-    controls.maxDistance = 100;
 
-    // lights - bright and even coverage
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambientLight);
-    
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.0);
-    dirLight1.position.set(5, 10, 7.5);
-    scene.add(dirLight1);
-    
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight2.position.set(-5, 5, -5);
-    scene.add(dirLight2);
-    
-    const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.5);
-    dirLight3.position.set(0, -5, 5);
-    scene.add(dirLight3);
-    
-    // Store default light intensities
-    const defaultLighting = {
-      ambient: 1.5,
-      dir1: 1.0,
-      dir2: 0.8,
-      dir3: 0.5,
-      exposure: 1.3
-    };
+    // Environment lighting (IBL) similar to Khronos viewer behavior
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
+    // Add soft lights for extra fill
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+    hemi.position.set(0, 20, 0);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 10, 7);
+    scene.add(dir);
+
+    // GLTF loader with optional decoders
     const loader = new GLTFLoader();
-    let currentModel = null;
-    let draggableObjects = [];
-    let dragControls = null;
-    let originalPositions = new Map();
-    let originalRotations = new Map();
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    loader.setDRACOLoader(draco);
 
-    function clearCurrentModel() {
-      if (currentModel) {
-        scene.remove(currentModel);
-        currentModel.traverse(obj => {
-          if (obj.isMesh) {
-            obj.geometry.dispose();
-            if (obj.material) {
-              const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-              mats.forEach(m => {
-                if (m.map) m.map.dispose();
-                if (m.normalMap) m.normalMap.dispose();
-                if (m.roughnessMap) m.roughnessMap.dispose();
-                if (m.metalnessMap) m.metalnessMap.dispose();
-                if (m.emissiveMap) m.emissiveMap.dispose();
-                m.dispose?.();
-              });
-            }
+    const ktx2 = new KTX2Loader().setTranscoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/').detectSupport(renderer);
+    loader.setKTX2Loader(ktx2);
+
+    // Multi-piece state
+    const raycastTargets = []; // meshes used for hit testing / selection
+    let pieces = [];
+    let selected = null;
+    let selectedBox = null;
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDown = null;
+    let dragging = false;
+    let isTransformDragging = false;
+    const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const dragOffset = new THREE.Vector3();
+    const dragIntersect = new THREE.Vector3();
+
+    let current;
+
+    function clearModel() {
+      if (!current) return;
+      scene.remove(current);
+      current.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.geometry?.dispose?.();
+          if (obj.material) {
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((m) => {
+              for (const key in m) {
+                const val = m[key];
+                if (val && val.isTexture) val.dispose();
+              }
+              m.dispose?.();
+            });
           }
-        });
-        currentModel = null;
-      }
-      draggableObjects = [];
-      if (dragControls) {
-        dragControls.dispose();
-        dragControls = null;
-      }
+        }
+      });
+      current = undefined;
     }
 
     function frameObject(object) {
       const box = new THREE.Box3().setFromObject(object);
-      const size = box.getSize(new THREE.Vector3()).length();
+      const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
 
-      controls.target.copy(center);
+      const distance = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+      const newPos = center.clone().add(new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(distance * 1.2));
 
-      const fitOffset = 1.2;
-      const fov = THREE.MathUtils.degToRad(camera.fov);
-      let distance = size / (2 * Math.tan(fov / 2));
-      distance *= fitOffset;
-
-      const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
-      camera.position.copy(controls.target).addScaledVector(dir, distance);
-
-      camera.near = distance / 100;
+      camera.near = Math.max(0.01, distance / 100);
       camera.far = distance * 100;
       camera.updateProjectionMatrix();
+
+      camera.position.copy(newPos);
+      controls.target.copy(center);
       controls.update();
     }
 
-    function loadFromURL(url) {
-      loader.load(
-        url,
-        (gltf) => {
-          clearCurrentModel();
-          currentModel = gltf.scene;
-          scene.add(currentModel);
-          frameObject(currentModel);
-          setupDraggableObjects();
-        },
-        undefined,
-        (err) => {
-          console.error('Failed to load model:', err);
-          alert('Failed to load model. See console for details.');
-        }
-      );
+    // --- Selection & dragging helpers ---
+    function getPieceGroup(obj) {
+      if (!obj) return null;
+      if (obj.userData && obj.userData.piece) return obj;
+      return obj.parent ? getPieceGroup(obj.parent) : null;
     }
 
-    function setupDraggableObjects() {
-      draggableObjects = [];
-      originalPositions.clear();
-      originalRotations.clear();
-      
-      if (currentModel) {
-        currentModel.traverse(obj => {
-          if (obj.isMesh) {
-            draggableObjects.push(obj);
-            // Store original world positions and rotations
-            const worldPos = new THREE.Vector3();
-            const worldRot = new THREE.Quaternion();
-            obj.getWorldPosition(worldPos);
-            obj.getWorldQuaternion(worldRot);
-            originalPositions.set(obj.uuid, worldPos.clone());
-            originalRotations.set(obj.uuid, worldRot.clone());
-          }
+    function setSelected(obj) {
+      const piece = getPieceGroup(obj);
+      if (selectedBox) {
+        scene.remove(selectedBox);
+        selectedBox = null;
+      }
+      selected = piece;
+      if (selected) {
+        selectedBox = new THREE.BoxHelper(selected, 0x0080ff);
+        scene.add(selectedBox);
+        selectedLabel.textContent = 'Selected: ' + (selected.name || '(unnamed)');
+        transform.attach(selected);
+      } else {
+        selectedLabel.textContent = 'Selected: None';
+        transform.detach();
+      }
+    }
+
+    // Transform gizmo for 3D translate/rotate/scale
+    const transform = new TransformControls(camera, renderer.domElement);
+    scene.add(transform);
+    transform.addEventListener('dragging-changed', (e) => {
+      isTransformDragging = e.value;
+      controls.enabled = !e.value && !dragging;
+    });
+
+    function addGltfToScene(gltf, name) {
+      const root = gltf.scene;
+      // Create wrapper with pivot centered on geometry
+      const box = new THREE.Box3().setFromObject(root);
+      const center = box.getCenter(new THREE.Vector3());
+      const wrapper = new THREE.Group();
+      wrapper.name = name || 'piece';
+      wrapper.userData.piece = true;
+      root.position.sub(center);
+      wrapper.add(root);
+      scene.add(wrapper);
+
+      pieces.push({ group: wrapper, name });
+
+      // Add mesh descendants to raycast targets and tag with piece group
+      root.traverse((child) => {
+        if (child.isMesh) {
+          child.userData.piece = wrapper;
+          raycastTargets.push(child);
+        }
+      });
+
+      frameObject(wrapper);
+      setSelected(wrapper);
+      statusEl.textContent = `Loaded: ${name}`;
+      dropHint.style.display = 'none';
+    }
+
+    function rotateSelected(delta) {
+      if (!selected) return;
+      selected.rotation.y += delta;
+      if (selectedBox) selectedBox.update();
+    }
+
+    async function loadArrayBuffer(arrayBuffer, name = 'model.glb') {
+      statusEl.textContent = `Loading: ${name}`;
+      try {
+        loader.parse(arrayBuffer, '', (gltf) => {
+          addGltfToScene(gltf, name);
+        }, (err) => {
+          console.error('GLTF parse error:', err);
+          statusEl.textContent = `Error loading ${name}`;
+          alert('Failed to parse GLB/GLTF: ' + err.message);
         });
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = `Error loading ${name}`;
+        alert('Failed to load model: ' + e.message);
       }
-      
-      // Enable assemble button
-      const assembleBtn = document.getElementById('assembleBtn');
-      if (draggableObjects.length > 1) {
-        assembleBtn.disabled = false;
-      }
+    }
 
-      if (dragControls) {
-        dragControls.dispose();
-      }
+    // UI handlers
+    openBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      const glbs = files.filter(f => /\.glb$/i.test(f.name));
+      glbs.forEach(file => file.arrayBuffer().then((ab) => loadArrayBuffer(ab, file.name)));
+      fileInput.value = '';
+    });
 
-      if (draggableObjects.length > 0) {
-        dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
-        
-        // Disable orbit controls while dragging
-        dragControls.addEventListener('dragstart', () => {
+    // Rotate buttons and keyboard shortcuts
+    const ROT_STEP = Math.PI / 12; // 15°
+    document.getElementById('rotLeft').addEventListener('click', () => rotateSelected(-ROT_STEP));
+    document.getElementById('rotRight').addEventListener('click', () => rotateSelected(ROT_STEP));
+    window.addEventListener('keydown', (e) => {
+      if (!selected) return;
+      if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') rotateSelected(-ROT_STEP);
+      if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') rotateSelected(ROT_STEP);
+    });
+
+    // TransformControls mode buttons
+    const modeButtons = {
+      move: document.createElement('button'),
+      rotate: document.createElement('button'),
+      scale: document.createElement('button'),
+    };
+    modeButtons.move.className = 'btn';
+    modeButtons.move.textContent = 'Move';
+    modeButtons.rotate.className = 'btn';
+    modeButtons.rotate.textContent = 'Rotate';
+    modeButtons.scale.className = 'btn';
+    modeButtons.scale.textContent = 'Scale';
+    const toolbar = document.getElementById('toolbar');
+    toolbar.insertBefore(modeButtons.scale, document.getElementById('status'));
+    toolbar.insertBefore(modeButtons.rotate, modeButtons.scale);
+    toolbar.insertBefore(modeButtons.move, modeButtons.rotate);
+    modeButtons.move.addEventListener('click', () => transform.setMode('translate'));
+    modeButtons.rotate.addEventListener('click', () => transform.setMode('rotate'));
+    modeButtons.scale.addEventListener('click', () => transform.setMode('scale'));
+
+    // Uniform scale slider
+    const scaleSlider = document.createElement('input');
+    scaleSlider.type = 'range';
+    scaleSlider.min = '0.1';
+    scaleSlider.max = '3';
+    scaleSlider.step = '0.01';
+    scaleSlider.value = '1';
+    scaleSlider.style.marginLeft = '12px';
+    document.getElementById('toolbar').insertBefore(scaleSlider, document.getElementById('status'));
+    scaleSlider.addEventListener('input', () => {
+      if (!selected) return;
+      const s = parseFloat(scaleSlider.value);
+      selected.scale.set(s, s, s);
+      if (selectedBox) selectedBox.update();
+    });
+
+    // Click-select & free-drag on ground plane with mouse/trackpad
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(raycastTargets, true);
+      if (hits.length) {
+        const hitPiece = getPieceGroup(hits[0].object);
+        setSelected(hitPiece);
+        // Start drag on selected piece
+        dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), selected.position);
+        raycaster.ray.intersectPlane(dragPlane, dragIntersect);
+        if (dragIntersect) {
+          dragOffset.copy(dragIntersect).sub(selected.position);
+          dragging = true;
           controls.enabled = false;
-        });
-        
-        dragControls.addEventListener('dragend', () => {
-          controls.enabled = true;
-        });
-
-        // Visual feedback
-        dragControls.addEventListener('hoveron', (event) => {
-          event.object.userData.originalMaterial = event.object.material;
-          if (Array.isArray(event.object.material)) {
-            event.object.material = event.object.material.map(mat => {
-              const newMat = mat.clone();
-              newMat.emissive.setHex(0x444444);
-              return newMat;
-            });
-          } else {
-            const newMat = event.object.material.clone();
-            newMat.emissive.setHex(0x444444);
-            event.object.material = newMat;
-          }
-        });
-
-        dragControls.addEventListener('hoveroff', (event) => {
-          if (event.object.userData.originalMaterial) {
-            event.object.material = event.object.userData.originalMaterial;
-            delete event.object.userData.originalMaterial;
-          }
-        });
-      }
-    }
-
-    // File input
-    const upload = document.getElementById('upload');
-    const loadBtn = document.getElementById('loadBtn');
-    loadBtn.addEventListener('click', () => upload.click());
-    upload.addEventListener('change', (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
-        alert('Please select a .glb or .gltf file.');
-        return;
-      }
-      const objectURL = URL.createObjectURL(file);
-      loadFromURL(objectURL);
-    });
-
-    // Drag and drop
-    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      renderer.domElement.addEventListener(eventName, preventDefaults, false);
-      document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    document.body.addEventListener('drop', (e) => {
-      const dt = e.dataTransfer;
-      const files = dt.files;
-      if (files && files[0]) {
-        const file = files[0];
-        if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
-          const objectURL = URL.createObjectURL(file);
-          loadFromURL(objectURL);
-        } else {
-          alert('Dropped file is not a .glb or .gltf.');
         }
+      } else {
+        setSelected(null);
       }
     });
 
-    // URL param ?src=...
-    const params = new URLSearchParams(window.location.search);
-    const src = params.get('src');
-    if (src) {
-      loadFromURL(src);
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (!dragging || !selected || isTransformDragging) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      if (raycaster.ray.intersectPlane(dragPlane, dragIntersect)) {
+        const target = dragIntersect.clone().sub(dragOffset);
+        selected.position.set(target.x, selected.position.y, target.z); // move in XZ
+        if (selectedBox) selectedBox.update();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (dragging) {
+        dragging = false;
+        controls.enabled = !isTransformDragging;
+      }
+    });
+
+    // Drag & drop
+    ['dragenter', 'dragover'].forEach((evt) =>
+      container.addEventListener(evt, (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; })
+    );
+    container.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files || []);
+      const glbs = files.filter(f => /\.glb$/i.test(f.name));
+      glbs.forEach(file => file.arrayBuffer().then((ab) => loadArrayBuffer(ab, file.name)));
+    });
+
+    // Attempt to auto-load a sibling GLB when served over http(s)
+    const defaultName = 'artifact2-mode_6_8pcs.glb';
+    if (location.protocol.startsWith('http')) {
+      loader.load(defaultName, (gltf) => {
+        addGltfToScene(gltf, defaultName);
+      }, undefined, (err) => {
+        console.warn('Auto-load failed:', err?.message || err);
+      });
     }
 
-    // Auto-assemble function
-    function autoAssemble() {
-      if (draggableObjects.length < 2) {
-        console.log('Need at least 2 objects');
-        return;
-      }
-      
-      console.log('Auto-assemble starting with', draggableObjects.length, 'objects');
-      
-      const assembleBtn = document.getElementById('assembleBtn');
-      assembleBtn.disabled = true;
-      assembleBtn.textContent = 'Assembling...';
-      
-      // Get current state
-      const initialStates = new Map();
-      draggableObjects.forEach(obj => {
-        const worldPos = new THREE.Vector3();
-        obj.getWorldPosition(worldPos);
-        initialStates.set(obj.uuid, worldPos.clone());
-      });
-      
-      // Calculate centroid of all pieces
-      const centroid = new THREE.Vector3();
-      let count = 0;
-      draggableObjects.forEach(obj => {
-        const worldPos = new THREE.Vector3();
-        obj.getWorldPosition(worldPos);
-        centroid.add(worldPos);
-        count++;
-      });
-      centroid.divideScalar(count);
-      
-      console.log('Centroid:', centroid);
-      
-      // Calculate target positions - move each piece 100% toward centroid
-      const targetPositions = new Map();
-      draggableObjects.forEach(obj => {
-        const worldPos = new THREE.Vector3();
-        obj.getWorldPosition(worldPos);
-        
-        const toCenter = new THREE.Vector3().subVectors(centroid, worldPos);
-        const targetPos = worldPos.clone().add(toCenter.multiplyScalar(1.0));
-        
-        targetPositions.set(obj.uuid, targetPos);
-        console.log('Object', obj.uuid.substring(0, 8), 'from', worldPos, 'to', targetPos);
-      });
-      
-      // Animate assembly
-      const duration = 1500; // 1.5 seconds
-      const startTime = Date.now();
-      
-      function animateAssembly() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function (ease-in-out)
-        const eased = progress < 0.5 
-          ? 2 * progress * progress 
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-        
-        draggableObjects.forEach(obj => {
-          const initial = initialStates.get(obj.uuid);
-          const target = targetPositions.get(obj.uuid);
-          
-          if (initial && target) {
-            // Interpolate world position
-            const worldPos = new THREE.Vector3().lerpVectors(initial, target, eased);
-            
-            // Convert to local space
-            if (obj.parent) {
-              const localPos = obj.parent.worldToLocal(worldPos.clone());
-              obj.position.copy(localPos);
-            } else {
-              obj.position.copy(worldPos);
-            }
-          }
-        });
-        
-        if (progress < 1) {
-          requestAnimationFrame(animateAssembly);
-        } else {
-          console.log('Assembly complete');
-          assembleBtn.disabled = false;
-          assembleBtn.textContent = 'Auto-assemble';
-          frameObject(currentModel);
-        }
-      }
-      
-      console.log('Starting animation');
-      animateAssembly();
-    }
-    
-    const assembleBtn = document.getElementById('assembleBtn');
-    assembleBtn.addEventListener('click', autoAssemble);
-    
-    // Lighting controls
-    const fullBrightBtn = document.getElementById('fullBrightBtn');
-    const resetLightBtn = document.getElementById('resetLightBtn');
-    
-    fullBrightBtn.addEventListener('click', () => {
-      // Full brightness from all angles
-      ambientLight.intensity = 2.5;
-      dirLight1.intensity = 1.5;
-      dirLight2.intensity = 1.5;
-      dirLight3.intensity = 1.5;
-      renderer.toneMappingExposure = 1.8;
-      
-      fullBrightBtn.classList.add('active');
-      resetLightBtn.classList.remove('active');
-    });
-    
-    resetLightBtn.addEventListener('click', () => {
-      // Reset to default lighting
-      ambientLight.intensity = defaultLighting.ambient;
-      dirLight1.intensity = defaultLighting.dir1;
-      dirLight2.intensity = defaultLighting.dir2;
-      dirLight3.intensity = defaultLighting.dir3;
-      renderer.toneMappingExposure = defaultLighting.exposure;
-      
-      resetLightBtn.classList.add('active');
-      fullBrightBtn.classList.remove('active');
-    });
-    
-    // Zoom controls
-    const zoomInBtn = document.getElementById('zoomIn');
-    const zoomOutBtn = document.getElementById('zoomOut');
-    
-    zoomInBtn.addEventListener('click', () => {
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      const distance = camera.position.distanceTo(controls.target);
-      const zoomAmount = distance * 0.2;
-      camera.position.addScaledVector(direction, zoomAmount);
-      controls.update();
-    });
-    
-    zoomOutBtn.addEventListener('click', () => {
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      const distance = camera.position.distanceTo(controls.target);
-      const zoomAmount = distance * 0.2;
-      camera.position.addScaledVector(direction, -zoomAmount);
-      controls.update();
-    });
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+    // Resize
+    function onResize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', onResize);
 
-    function animate() {
+    // Render loop
+    (function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      if (selectedBox) selectedBox.update();
       renderer.render(scene, camera);
-    }
-    animate();
+    })();
   </script>
 </body>
 </html>
-Welcome put your code here
