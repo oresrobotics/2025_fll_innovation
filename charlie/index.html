@@ -61,6 +61,69 @@
       color: #666;
       cursor: not-allowed;
     }
+    #scrambleBtn {
+      position: absolute;
+      top: 290px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #scrambleBtn:hover { background: #333; }
+    #scrambleBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #scrambleControls {
+      position: absolute;
+      top: 330px;
+      left: 56px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 160px;
+    }
+    #scrambleControls.hidden {
+      display: none;
+    }
+    #scrambleControls label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    #scrambleControls input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #scrambleControls .value-display {
+      color: #4a90e2;
+      font-size: 12px;
+      text-align: right;
+    }
+    #stopScrambleBtn {
+      padding: 6px 10px;
+      background: #d9534f;
+      color: #fff;
+      border: 1px solid #c9302c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    #stopScrambleBtn:hover {
+      background: #c9302c;
+    }
     #lightingControls {
       position: absolute;
       top: 90px;
@@ -89,6 +152,78 @@
       color: #666;
       cursor: not-allowed;
     }
+    #gridBtn {
+      position: absolute;
+      top: 210px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #gridBtn:hover { background: #333; }
+    #gridBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #gravityBtn {
+      position: absolute;
+      top: 250px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #gravityBtn:hover { background: #333; }
+    #gravityBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #gravityBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #gridControls {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 160px;
+    }
+    #gridControls.hidden {
+      display: none;
+    }
+    #gridControls label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    #gridControls input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #gridControls .value-display {
+      color: #4a90e2;
+      font-size: 12px;
+      text-align: right;
+    }
     #sliceModeBtn {
       position: absolute;
       top: 56px;
@@ -107,9 +242,27 @@
       background: #4a90e2;
       border-color: #4a90e2;
     }
-    #slicingControls {
+    #wireframeBtn {
       position: absolute;
       top: 96px;
+      right: 10px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #wireframeBtn:hover { background: #333; }
+    #wireframeBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #slicingControls {
+      position: absolute;
+      top: 176px;
       right: 10px;
       z-index: 10;
       display: flex;
@@ -487,6 +640,20 @@
     <button class="lightBtn active" id="resetLightBtn">Reset Lighting</button>
   </div>
   <button id="downloadBtn" disabled>Download GLB</button>
+  <button id="gridBtn">Show Grid</button>
+  <button id="gravityBtn" disabled>Gravity</button>
+  <div id="gridControls" class="hidden">
+    <label>Grid Height</label>
+    <input type="range" id="gridHeight" min="-5" max="5" step="0.1" value="0">
+    <div class="value-display" id="heightValue">0.0</div>
+  </div>
+  <button id="scrambleBtn" disabled>Start Scramble</button>
+  <div id="scrambleControls" class="hidden">
+    <label>Boundary Limit</label>
+    <input type="range" id="scrambleRadius" min="0.5" max="5" step="0.1" value="2">
+    <div class="value-display" id="radiusValue">2.0x</div>
+    <button id="stopScrambleBtn">Stop Scramble</button>
+  </div>
   <div id="zoomControls">
     <button class="zoomBtn" id="zoomIn" title="Zoom In">+</button>
     <button class="zoomBtn" id="zoomOut" title="Zoom Out">−</button>
@@ -507,6 +674,7 @@
     </div>
     <button class="sliceBtn" id="flipSliceBtn">Flip Direction</button>
   </div>
+  <button id="wireframeBtn">Show Boundaries</button>
   <script type="importmap">
     {
       "imports": {
@@ -577,6 +745,13 @@
     let originalRotations = new Map();
     let clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
     let slicingEnabled = false;
+    let wireframeMode = false;
+    let edgesHelpers = [];
+    let gridHelper = null;
+    let gridVisible = false;
+    let gravityEnabled = false;
+    let gravityAnimationId = null;
+    let physicsData = new Map();
 
     function clearCurrentModel() {
       if (currentModel) {
@@ -665,14 +840,18 @@
         });
       }
       
-      // Enable assemble and download buttons
+      // Enable assemble, download, scramble, and gravity buttons
       const assembleBtn = document.getElementById('assembleBtn');
       const downloadBtn = document.getElementById('downloadBtn');
+      const scrambleBtn = document.getElementById('scrambleBtn');
+      const gravityBtn = document.getElementById('gravityBtn');
       if (draggableObjects.length > 1) {
         assembleBtn.disabled = false;
+        scrambleBtn.disabled = false;
       }
       if (draggableObjects.length > 0) {
         downloadBtn.disabled = false;
+        gravityBtn.disabled = false;
       }
 
       if (dragControls) {
@@ -1009,6 +1188,142 @@
     const assembleBtn = document.getElementById('assembleBtn');
     assembleBtn.addEventListener('click', autoAssemble);
     
+    // Scramble functionality
+    const scrambleBtn = document.getElementById('scrambleBtn');
+    const scrambleControls = document.getElementById('scrambleControls');
+    const scrambleRadius = document.getElementById('scrambleRadius');
+    const radiusValue = document.getElementById('radiusValue');
+    const stopScrambleBtn = document.getElementById('stopScrambleBtn');
+    let scrambleActive = false;
+    let scrambleAnimationId = null;
+    let scrambleData = new Map(); // stores center, velocity, target for each object
+    
+    // Update radius display
+    scrambleRadius.addEventListener('input', () => {
+      radiusValue.textContent = parseFloat(scrambleRadius.value).toFixed(1) + 'x';
+    });
+    
+    // Start scramble
+    scrambleBtn.addEventListener('click', () => {
+      if (!scrambleActive) {
+        startScramble();
+      }
+    });
+    
+    // Stop scramble
+    stopScrambleBtn.addEventListener('click', () => {
+      stopScramble();
+    });
+    
+    function startScramble() {
+      if (draggableObjects.length < 2) return;
+      
+      scrambleActive = true;
+      scrambleBtn.disabled = true;
+      scrambleBtn.textContent = 'Scrambling...';
+      scrambleControls.classList.remove('hidden');
+      
+      console.log('Starting continuous scramble');
+      
+      // Calculate center point and average distance
+      const center = new THREE.Vector3();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        center.add(worldPos);
+      });
+      center.divideScalar(draggableObjects.length);
+      
+      let avgDistance = 0;
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        avgDistance += worldPos.distanceTo(center);
+      });
+      avgDistance /= draggableObjects.length;
+      
+      // Initialize scramble data for each object
+      draggableObjects.forEach(obj => {
+        // Random velocity
+        const velocity = new THREE.Vector3(
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02
+        );
+        
+        scrambleData.set(obj.uuid, {
+          center: center.clone(),
+          avgDistance: avgDistance,
+          velocity: velocity,
+          offset: new THREE.Vector3()
+        });
+      });
+      
+      animateScramble();
+    }
+    
+    function animateScramble() {
+      if (!scrambleActive) return;
+      
+      const radius = parseFloat(scrambleRadius.value);
+      
+      draggableObjects.forEach(obj => {
+        const data = scrambleData.get(obj.uuid);
+        if (!data) return;
+        
+        const boundaryRadius = data.avgDistance * radius;
+        
+        // Update offset position
+        data.offset.add(data.velocity);
+        
+        // Check boundary and bounce
+        const distanceFromCenter = data.offset.length();
+        if (distanceFromCenter > boundaryRadius) {
+          // Bounce back by reversing velocity and adding randomness
+          const normal = data.offset.clone().normalize();
+          data.velocity.reflect(normal);
+          data.velocity.multiplyScalar(0.9); // slight damping
+          
+          // Add some randomness to avoid synchronization
+          data.velocity.x += (Math.random() - 0.5) * 0.005;
+          data.velocity.y += (Math.random() - 0.5) * 0.005;
+          data.velocity.z += (Math.random() - 0.5) * 0.005;
+          
+          // Push back inside boundary
+          data.offset.normalize().multiplyScalar(boundaryRadius * 0.95);
+        }
+        
+        // Apply position
+        const worldPos = data.center.clone().add(data.offset);
+        
+        if (obj.parent) {
+          const localPos = obj.parent.worldToLocal(worldPos.clone());
+          obj.position.copy(localPos);
+        } else {
+          obj.position.copy(worldPos);
+        }
+      });
+      
+      scrambleAnimationId = requestAnimationFrame(animateScramble);
+    }
+    
+    function stopScramble() {
+      if (!scrambleActive) return;
+      
+      scrambleActive = false;
+      if (scrambleAnimationId) {
+        cancelAnimationFrame(scrambleAnimationId);
+        scrambleAnimationId = null;
+      }
+      
+      scrambleBtn.disabled = false;
+      scrambleBtn.textContent = 'Start Scramble';
+      scrambleControls.classList.add('hidden');
+      scrambleData.clear();
+      
+      console.log('Scramble stopped');
+    }
+    
     // Lighting controls
     const fullBrightBtn = document.getElementById('fullBrightBtn');
     const resetLightBtn = document.getElementById('resetLightBtn');
@@ -1147,6 +1462,262 @@
       sliceDirection *= -1;
       updateSlicing();
     });
+    
+    // Wireframe/boundaries mode
+    const wireframeBtn = document.getElementById('wireframeBtn');
+    
+    wireframeBtn.addEventListener('click', () => {
+      wireframeMode = !wireframeMode;
+      
+      if (wireframeMode) {
+        wireframeBtn.classList.add('active');
+        wireframeBtn.textContent = 'Hide Boundaries';
+        showBoundaries();
+      } else {
+        wireframeBtn.classList.remove('active');
+        wireframeBtn.textContent = 'Show Boundaries';
+        hideBoundaries();
+      }
+    });
+    
+    function showBoundaries() {
+      if (!currentModel) return;
+      
+      currentModel.traverse(obj => {
+        if (obj.isMesh) {
+          // Create edge geometry
+          const edges = new THREE.EdgesGeometry(obj.geometry, 15);
+          const lineMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00ff00,
+            linewidth: 2,
+            transparent: true,
+            opacity: 0.8
+          });
+          const edgesHelper = new THREE.LineSegments(edges, lineMaterial);
+          
+          // Match the mesh's transform
+          edgesHelper.position.copy(obj.position);
+          edgesHelper.rotation.copy(obj.rotation);
+          edgesHelper.scale.copy(obj.scale);
+          
+          // Add to parent
+          if (obj.parent) {
+            obj.parent.add(edgesHelper);
+          }
+          
+          // Store reference
+          edgesHelpers.push({ mesh: obj, helper: edgesHelper });
+        }
+      });
+    }
+    
+    function hideBoundaries() {
+      edgesHelpers.forEach(({ helper }) => {
+        if (helper.parent) {
+          helper.parent.remove(helper);
+        }
+        helper.geometry.dispose();
+        helper.material.dispose();
+      });
+      edgesHelpers = [];
+    }
+    
+    // Update edge helpers when dragging
+    if (dragControls) {
+      const originalDragStart = dragControls.addEventListener('dragstart', () => {
+        controls.enabled = false;
+      });
+      
+      const originalDrag = dragControls.addEventListener('drag', (event) => {
+        if (wireframeMode) {
+          // Update corresponding edge helper
+          const helper = edgesHelpers.find(h => h.mesh === event.object);
+          if (helper) {
+            helper.helper.position.copy(event.object.position);
+            helper.helper.rotation.copy(event.object.rotation);
+            helper.helper.scale.copy(event.object.scale);
+          }
+        }
+      });
+    }
+    
+    // Grid toggle and controls
+    const gridBtn = document.getElementById('gridBtn');
+    const gridControls = document.getElementById('gridControls');
+    const gridHeight = document.getElementById('gridHeight');
+    const heightValue = document.getElementById('heightValue');
+    
+    // Update height display and grid position
+    gridHeight.addEventListener('input', () => {
+      const height = parseFloat(gridHeight.value);
+      heightValue.textContent = height.toFixed(1);
+      if (gridHelper) {
+        gridHelper.position.y = height;
+      }
+    });
+    
+    gridBtn.addEventListener('click', () => {
+      gridVisible = !gridVisible;
+      
+      if (gridVisible) {
+        gridBtn.classList.add('active');
+        gridBtn.textContent = 'Hide Grid';
+        gridControls.classList.remove('hidden');
+        showGrid();
+      } else {
+        gridBtn.classList.remove('active');
+        gridBtn.textContent = 'Show Grid';
+        gridControls.classList.add('hidden');
+        hideGrid();
+      }
+    });
+    
+    function showGrid() {
+      if (gridHelper) return; // Already visible
+      
+      // Create grid helper
+      const size = 10;
+      const divisions = 20;
+      gridHelper = new THREE.GridHelper(size, divisions, 0x888888, 0x444444);
+      gridHelper.material.transparent = true;
+      gridHelper.material.opacity = 0.5;
+      
+      // Set initial height from slider
+      const height = parseFloat(gridHeight.value);
+      gridHelper.position.y = height;
+      
+      scene.add(gridHelper);
+    }
+    
+    function hideGrid() {
+      if (!gridHelper) return;
+      
+      scene.remove(gridHelper);
+      gridHelper.geometry.dispose();
+      gridHelper.material.dispose();
+      gridHelper = null;
+    }
+    
+    // Gravity simulation
+    const gravityBtn = document.getElementById('gravityBtn');
+    
+    gravityBtn.addEventListener('click', () => {
+      gravityEnabled = !gravityEnabled;
+      
+      if (gravityEnabled) {
+        gravityBtn.classList.add('active');
+        gravityBtn.textContent = 'Stop Gravity';
+        startGravity();
+      } else {
+        gravityBtn.classList.remove('active');
+        gravityBtn.textContent = 'Gravity';
+        stopGravity();
+      }
+    });
+    
+    function startGravity() {
+      if (draggableObjects.length === 0) return;
+      
+      console.log('Starting gravity simulation');
+      
+      // Get floor height from grid
+      const floorY = gridHelper ? gridHelper.position.y : 0;
+      
+      // Initialize physics for each object
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        
+        // Calculate bounding box to get bottom position
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const objectBottom = bbox.min.y;
+        const objectHeight = bbox.max.y - bbox.min.y;
+        
+        physicsData.set(obj.uuid, {
+          velocity: new THREE.Vector3(0, 0, 0),
+          objectHeight: objectHeight,
+          mass: 1.0,
+          restitution: 0.4, // bounciness
+          friction: 0.8,
+          isGrounded: false
+        });
+      });
+      
+      animateGravity();
+    }
+    
+    function animateGravity() {
+      if (!gravityEnabled) return;
+      
+      const floorY = gridHelper ? gridHelper.position.y : 0;
+      const gravity = -0.01; // gravity acceleration
+      const damping = 0.98; // air resistance
+      const dt = 1; // time step
+      
+      draggableObjects.forEach(obj => {
+        const data = physicsData.get(obj.uuid);
+        if (!data) return;
+        
+        // Get current world position
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        
+        // Calculate bottom of object
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const objectBottom = bbox.min.y;
+        
+        // Apply gravity
+        data.velocity.y += gravity * dt;
+        
+        // Update position
+        worldPos.add(data.velocity);
+        
+        // Ground collision
+        if (objectBottom + data.velocity.y <= floorY) {
+          // Position at floor
+          worldPos.y = floorY + (worldPos.y - objectBottom);
+          
+          // Bounce
+          if (Math.abs(data.velocity.y) > 0.001) {
+            data.velocity.y = -data.velocity.y * data.restitution;
+          } else {
+            // Stop bouncing if velocity too small
+            data.velocity.y = 0;
+            data.isGrounded = true;
+          }
+          
+          // Apply friction to horizontal movement
+          data.velocity.x *= data.friction;
+          data.velocity.z *= data.friction;
+        }
+        
+        // Apply damping to velocity
+        data.velocity.multiplyScalar(damping);
+        
+        // Set position
+        if (obj.parent) {
+          const localPos = obj.parent.worldToLocal(worldPos.clone());
+          obj.position.copy(localPos);
+        } else {
+          obj.position.copy(worldPos);
+        }
+      });
+      
+      gravityAnimationId = requestAnimationFrame(animateGravity);
+    }
+    
+    function stopGravity() {
+      if (!gravityEnabled) return;
+      
+      gravityEnabled = false;
+      if (gravityAnimationId) {
+        cancelAnimationFrame(gravityAnimationId);
+        gravityAnimationId = null;
+      }
+      
+      physicsData.clear();
+      console.log('Gravity simulation stopped');
+    }
     
     // Zoom controls
     const zoomInBtn = document.getElementById('zoomIn');
