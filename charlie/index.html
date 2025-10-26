@@ -63,7 +63,7 @@
     }
     #scrambleBtn {
       position: absolute;
-      top: 290px;
+      top: 330px;
       left: 56px;
       z-index: 10;
       padding: 6px 10px;
@@ -82,7 +82,7 @@
     }
     #scrambleControls {
       position: absolute;
-      top: 330px;
+      top: 370px;
       left: 56px;
       z-index: 10;
       display: flex;
@@ -189,6 +189,25 @@
       border-color: #4a90e2;
     }
     #gravityBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #explodeBtn {
+      position: absolute;
+      top: 290px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #explodeBtn:hover { background: #333; }
+    #explodeBtn:disabled {
       background: #1a1a1a;
       color: #666;
       cursor: not-allowed;
@@ -631,7 +650,7 @@
       </div>
     </div>
   </div>
-  <input type="file" id="upload" accept=".glb,.gltf" />
+  <input type="file" id="upload" accept=".glb,.gltf" multiple />
   <button id="homeIconBtn" title="Home">🏠</button>
   <button id="loadBtn">Load model…</button>
   <button id="assembleBtn" disabled>Auto-assemble</button>
@@ -642,6 +661,7 @@
   <button id="downloadBtn" disabled>Download GLB</button>
   <button id="gridBtn">Show Grid</button>
   <button id="gravityBtn" disabled>Gravity</button>
+  <button id="explodeBtn" disabled>Explode</button>
   <div id="gridControls" class="hidden">
     <label>Grid Height</label>
     <input type="range" id="gridHeight" min="-5" max="5" step="0.1" value="0">
@@ -840,14 +860,16 @@
         });
       }
       
-      // Enable assemble, download, scramble, and gravity buttons
+      // Enable assemble, download, scramble, gravity, and explode buttons
       const assembleBtn = document.getElementById('assembleBtn');
       const downloadBtn = document.getElementById('downloadBtn');
       const scrambleBtn = document.getElementById('scrambleBtn');
       const gravityBtn = document.getElementById('gravityBtn');
+      const explodeBtn = document.getElementById('explodeBtn');
       if (draggableObjects.length > 1) {
         assembleBtn.disabled = false;
         scrambleBtn.disabled = false;
+        explodeBtn.disabled = false;
       }
       if (draggableObjects.length > 0) {
         downloadBtn.disabled = false;
@@ -1054,15 +1076,59 @@
     const loadBtn = document.getElementById('loadBtn');
     loadBtn.addEventListener('click', () => upload.click());
     upload.addEventListener('change', (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
-        alert('Please select a .glb or .gltf file.');
-        return;
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      
+      // Validate all files
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
+          alert('Please select only .glb or .gltf files.');
+          return;
+        }
       }
+      
       hideHomeScreen();
-      const objectURL = URL.createObjectURL(file);
-      loadFromURL(objectURL);
+      
+      // Clear existing model
+      clearCurrentModel();
+      
+      // Create a container for all models
+      currentModel = new THREE.Group();
+      scene.add(currentModel);
+      
+      // Load all files
+      let loadedCount = 0;
+      const totalFiles = files.length;
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const objectURL = URL.createObjectURL(file);
+        
+        loader.load(
+          objectURL,
+          (gltf) => {
+            // Add each model to the group with slight offset to avoid overlap
+            const model = gltf.scene;
+            model.position.x = (i - totalFiles / 2) * 0.5; // Spread them out
+            currentModel.add(model);
+            
+            loadedCount++;
+            console.log(`Loaded ${loadedCount}/${totalFiles}: ${file.name}`);
+            
+            // When all files are loaded
+            if (loadedCount === totalFiles) {
+              frameObject(currentModel);
+              setupDraggableObjects();
+            }
+          },
+          undefined,
+          (err) => {
+            console.error(`Failed to load ${file.name}:`, err);
+            alert(`Failed to load ${file.name}. See console for details.`);
+          }
+        );
+      }
     });
 
     // Drag and drop
@@ -1074,14 +1140,56 @@
     document.body.addEventListener('drop', (e) => {
       const dt = e.dataTransfer;
       const files = dt.files;
-      if (files && files[0]) {
-        const file = files[0];
-        if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
-          hideHomeScreen();
+      if (files && files.length > 0) {
+        // Validate all files
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
+            alert('Please drop only .glb or .gltf files.');
+            return;
+          }
+        }
+        
+        hideHomeScreen();
+        
+        // Clear existing model
+        clearCurrentModel();
+        
+        // Create a container for all models
+        currentModel = new THREE.Group();
+        scene.add(currentModel);
+        
+        // Load all files
+        let loadedCount = 0;
+        const totalFiles = files.length;
+        
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
           const objectURL = URL.createObjectURL(file);
-          loadFromURL(objectURL);
-        } else {
-          alert('Dropped file is not a .glb or .gltf.');
+          
+          loader.load(
+            objectURL,
+            (gltf) => {
+              // Add each model to the group with slight offset
+              const model = gltf.scene;
+              model.position.x = (i - totalFiles / 2) * 0.5;
+              currentModel.add(model);
+              
+              loadedCount++;
+              console.log(`Loaded ${loadedCount}/${totalFiles}: ${file.name}`);
+              
+              // When all files are loaded
+              if (loadedCount === totalFiles) {
+                frameObject(currentModel);
+                setupDraggableObjects();
+              }
+            },
+            undefined,
+            (err) => {
+              console.error(`Failed to load ${file.name}:`, err);
+              alert(`Failed to load ${file.name}. See console for details.`);
+            }
+          );
         }
       }
     });
@@ -1495,12 +1603,13 @@
           });
           const edgesHelper = new THREE.LineSegments(edges, lineMaterial);
           
-          // Match the mesh's transform
+          // Match the mesh's initial transform
           edgesHelper.position.copy(obj.position);
           edgesHelper.rotation.copy(obj.rotation);
+          edgesHelper.quaternion.copy(obj.quaternion);
           edgesHelper.scale.copy(obj.scale);
           
-          // Add to parent
+          // Add to same parent as mesh
           if (obj.parent) {
             obj.parent.add(edgesHelper);
           }
@@ -1512,7 +1621,7 @@
     }
     
     function hideBoundaries() {
-      edgesHelpers.forEach(({ helper }) => {
+      edgesHelpers.forEach(({ mesh, helper }) => {
         if (helper.parent) {
           helper.parent.remove(helper);
         }
@@ -1522,24 +1631,8 @@
       edgesHelpers = [];
     }
     
-    // Update edge helpers when dragging
-    if (dragControls) {
-      const originalDragStart = dragControls.addEventListener('dragstart', () => {
-        controls.enabled = false;
-      });
-      
-      const originalDrag = dragControls.addEventListener('drag', (event) => {
-        if (wireframeMode) {
-          // Update corresponding edge helper
-          const helper = edgesHelpers.find(h => h.mesh === event.object);
-          if (helper) {
-            helper.helper.position.copy(event.object.position);
-            helper.helper.rotation.copy(event.object.rotation);
-            helper.helper.scale.copy(event.object.scale);
-          }
-        }
-      });
-    }
+    // Edge helpers are now parented to meshes, so they automatically follow
+    // No need for manual updates during drag
     
     // Grid toggle and controls
     const gridBtn = document.getElementById('gridBtn');
@@ -1719,6 +1812,192 @@
       console.log('Gravity simulation stopped');
     }
     
+    // Explode functionality
+    const explodeBtn = document.getElementById('explodeBtn');
+    
+    explodeBtn.addEventListener('click', () => {
+      explodeFragments();
+    });
+    
+    function explodeFragments() {
+      if (draggableObjects.length < 2) return;
+      
+      explodeBtn.disabled = true;
+      explodeBtn.textContent = 'Exploding...';
+      
+      console.log('Starting explode animation');
+      
+      // Store initial states
+      const initialStates = new Map();
+      const initialRotations = new Map();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        const worldRot = new THREE.Quaternion();
+        obj.getWorldPosition(worldPos);
+        obj.getWorldQuaternion(worldRot);
+        initialStates.set(obj.uuid, worldPos.clone());
+        initialRotations.set(obj.uuid, worldRot.clone());
+      });
+      
+      // Calculate center point
+      const center = new THREE.Vector3();
+      draggableObjects.forEach(obj => {
+        center.add(initialStates.get(obj.uuid));
+      });
+      center.divideScalar(draggableObjects.length);
+      
+      // Calculate target positions and rotations
+      const targetPositions = new Map();
+      const spinData = new Map();
+      
+      draggableObjects.forEach(obj => {
+        const initialPos = initialStates.get(obj.uuid);
+        
+        // Random direction in 3D sphere (uniform distribution)
+        const theta = Math.random() * Math.PI * 2; // Azimuthal angle (0 to 2π)
+        const phi = Math.acos(2 * Math.random() - 1); // Polar angle (0 to π)
+        const direction = new THREE.Vector3(
+          Math.sin(phi) * Math.cos(theta),
+          Math.sin(phi) * Math.sin(theta),
+          Math.cos(phi)
+        );
+        
+        // Random distance (2 to 5 units from center)
+        const distance = 2 + Math.random() * 3;
+        
+        // Target position is center + random direction * distance
+        const targetPos = center.clone().add(direction.multiplyScalar(distance));
+        targetPositions.set(obj.uuid, targetPos);
+        
+        // Generate random spin velocities
+        const spinVelocity = new THREE.Vector3(
+          (Math.random() - 0.5) * Math.PI * 2, // X rotation
+          (Math.random() - 0.5) * Math.PI * 2, // Y rotation
+          (Math.random() - 0.5) * Math.PI * 2  // Z rotation
+        );
+        
+        spinData.set(obj.uuid, {
+          spinVelocity: spinVelocity,
+          currentRotation: new THREE.Euler(0, 0, 0)
+        });
+      });
+      
+      // Animate explosion
+      const explosionDuration = 2000; // 2 seconds for explosion
+      const waitDuration = 5000; // 5 seconds wait
+      const rotationDuration = 2000; // 2 seconds to reset rotation
+      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 9 seconds total
+      const startTime = Date.now();
+      
+      function animateExplode() {
+        const elapsed = Date.now() - startTime;
+        const totalProgress = Math.min(elapsed / totalDuration, 1);
+        
+        // Phase 1: Explosion (0-2 seconds)
+        if (elapsed < explosionDuration) {
+          const progress = elapsed / explosionDuration;
+          
+          // Easing for position (ease-out)
+          const posEased = 1 - Math.pow(1 - progress, 3);
+          
+          // Rotation slows down at the end
+          const rotProgress = progress < 0.9 ? progress : 0.9 + (progress - 0.9) * 0.1;
+        
+          draggableObjects.forEach(obj => {
+            const initial = initialStates.get(obj.uuid);
+            const target = targetPositions.get(obj.uuid);
+            const spin = spinData.get(obj.uuid);
+            const initialRot = initialRotations.get(obj.uuid);
+            
+            if (initial && target && spin) {
+              // Interpolate position
+              const worldPos = new THREE.Vector3().lerpVectors(initial, target, posEased);
+              
+              // Apply spinning during flight
+              const currentSpin = spin.spinVelocity.clone().multiplyScalar(rotProgress);
+              
+              // At the end, interpolate back to no rotation
+              if (progress > 0.8) {
+                // Blend from spinning to identity rotation
+                const resetProgress = (progress - 0.8) / 0.2; // 0 to 1 over last 20%
+                const resetEased = resetProgress * resetProgress; // Ease in
+                
+                // Create rotation from spin
+                const spinQuat = new THREE.Quaternion().setFromEuler(
+                  new THREE.Euler(currentSpin.x, currentSpin.y, currentSpin.z)
+                );
+                
+                // Identity quaternion (no rotation)
+                const identityQuat = new THREE.Quaternion();
+                
+                // Interpolate to identity
+                const finalQuat = new THREE.Quaternion().slerpQuaternions(spinQuat, identityQuat, resetEased);
+                obj.quaternion.copy(finalQuat);
+              } else {
+                // Normal spinning
+                obj.rotation.x = currentSpin.x;
+                obj.rotation.y = currentSpin.y;
+                obj.rotation.z = currentSpin.z;
+              }
+              
+              // Set position
+              if (obj.parent) {
+                const localPos = obj.parent.worldToLocal(worldPos.clone());
+                obj.position.copy(localPos);
+              } else {
+                obj.position.copy(worldPos);
+              }
+            }
+          });
+        }
+        // Phase 2: Wait (2-7 seconds) - pieces stay in exploded state with final spun rotation
+        else if (elapsed < explosionDuration + waitDuration) {
+          // Do nothing - pieces stay where they landed
+        }
+        // Phase 3: Rotate back to original (7-9 seconds)
+        else {
+          const rotElapsed = elapsed - explosionDuration - waitDuration;
+          const rotProgress = Math.min(rotElapsed / rotationDuration, 1);
+          const rotEased = rotProgress < 0.5 
+            ? 2 * rotProgress * rotProgress 
+            : 1 - Math.pow(-2 * rotProgress + 2, 2) / 2;
+          
+          draggableObjects.forEach(obj => {
+            const initialRot = initialRotations.get(obj.uuid);
+            const currentQuat = obj.quaternion.clone();
+            
+            // Slerp back to original rotation
+            const targetQuat = new THREE.Quaternion().slerpQuaternions(
+              currentQuat,
+              initialRot,
+              rotEased * 0.1 // Gradual blend
+            );
+            
+            obj.quaternion.copy(targetQuat);
+          });
+        }
+        
+        if (totalProgress < 1) {
+          requestAnimationFrame(animateExplode);
+        } else {
+          // Ensure all rotations are back to original
+          draggableObjects.forEach(obj => {
+            const originalRot = initialRotations.get(obj.uuid);
+            if (originalRot) {
+              obj.quaternion.copy(originalRot);
+            }
+          });
+          
+          explodeBtn.disabled = false;
+          explodeBtn.textContent = 'Explode';
+          frameObject(currentModel);
+          console.log('Explode complete');
+        }
+      }
+      
+      animateExplode();
+    }
+    
     // Zoom controls
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomOutBtn = document.getElementById('zoomOut');
@@ -1750,6 +2029,47 @@
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      
+      // Update edge helpers to follow meshes
+      if (wireframeMode && edgesHelpers.length > 0) {
+        edgesHelpers.forEach(({ mesh, helper }) => {
+          // Sync helper transform with mesh
+          helper.position.copy(mesh.position);
+          helper.rotation.copy(mesh.rotation);
+          helper.quaternion.copy(mesh.quaternion);
+          helper.scale.copy(mesh.scale);
+        });
+      }
+      
+      // Enforce grid floor constraint - prevent objects from passing through
+      if (gridHelper && draggableObjects.length > 0) {
+        const floorY = gridHelper.position.y;
+        
+        draggableObjects.forEach(obj => {
+          // Get bounding box
+          const bbox = new THREE.Box3().setFromObject(obj);
+          const objectBottom = bbox.min.y;
+          
+          // If object bottom is below floor, push it up
+          if (objectBottom < floorY) {
+            const worldPos = new THREE.Vector3();
+            obj.getWorldPosition(worldPos);
+            
+            // Calculate how much to lift the object
+            const correction = floorY - objectBottom;
+            worldPos.y += correction;
+            
+            // Apply corrected position
+            if (obj.parent) {
+              const localPos = obj.parent.worldToLocal(worldPos.clone());
+              obj.position.copy(localPos);
+            } else {
+              obj.position.copy(worldPos);
+            }
+          }
+        });
+      }
+      
       renderer.render(scene, camera);
     }
     animate();
