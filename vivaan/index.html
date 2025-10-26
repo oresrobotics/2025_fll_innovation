@@ -1,295 +1,295 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Archaeological Assembly</title>
-    <!-- Load Tailwind CSS -->
+    <title>GLB 3D Importer</title>
+    <!-- Load Tailwind CSS for aesthetic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Three.js for 3D rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Load Orbit Controls for camera movement -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        /* Set the custom font and ensure full-screen coverage */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; margin: 0; overflow: hidden; }
-        #app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+        /* Set up the body and viewer to take up the full viewport */
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background for a premium feel */
         }
-        #three-container {
-            flex-grow: 1;
+        #viewer-container {
+            width: 100vw;
+            height: 100vh;
             position: relative;
         }
+        /* Style the message box */
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 1.5rem 2.5rem;
+            background-color: rgba(30, 41, 59, 0.95);
+            color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            min-width: 300px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+        /* Ensure the canvas covers the container */
+        canvas {
+            display: block;
+        }
     </style>
+    <!-- Load Three.js core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Load GLTFLoader for handling .glb and .gltf files -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Load OrbitControls for camera interaction (rotate, pan, zoom) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
-<body class="antialiased">
-
-    <div id="app-container">
-        <!-- Header & Status -->
-        <header class="p-4 bg-gray-900 shadow-xl text-white flex justify-between items-center z-10">
-            <h1 class="text-xl font-bold text-yellow-300">Archaeological Fragment Assembly (3D)</h1>
-            <div id="status-box" class="px-4 py-2 bg-gray-700 rounded-full text-sm font-mono transition-all duration-300">
-                Status: Ready to Assemble
-            </div>
-        </header>
-
-        <!-- 3D Viewport -->
-        <div id="three-container">
-            <!-- 3D canvas will be injected here -->
-        </div>
-
-        <!-- Instructions -->
-        <footer class="p-2 bg-gray-900 text-center text-gray-400 text-xs md:text-sm">
-            Use **Mouse Drag** to rotate the camera. Use **Scroll** to zoom. **Click and Drag** a fragment to move it along the ground plane.
-        </footer>
+<body>
+    <div id="viewer-container">
+        <!-- The canvas will be appended here -->
     </div>
 
-<script>
-    // --- Global Variables ---
-    const THREE_CONTAINER = document.getElementById('three-container');
-    const STATUS_BOX = document.getElementById('status-box');
-    const SNAP_THRESHOLD = 0.5; // Distance in 3D units for snapping
-    
-    let scene, camera, renderer, controls;
-    let raycaster, pointer, dragPlane;
-    let activePiece = null;
-    let offset = new THREE.Vector3();
-    let pieces = [];
-    let piecesSnapped = 0;
+    <!-- Controls Panel: Floating at the bottom center -->
+    <div id="controls-panel" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 p-3 rounded-xl shadow-2xl flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 z-20 border border-indigo-500/50">
+        <label for="file-input" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-md active:scale-95">
+            Load New .GLB File
+        </label>
+        <input type="file" id="file-input" accept=".glb, .gltf" class="hidden">
+        <p class="text-xs text-slate-300 hidden sm:block">
+            Controls: Click/Drag to **Rotate**, Scroll to **Zoom**
+        </p>
+    </div>
 
-    // --- Artifact Data (Position, Type, Color) ---
-    const artifactData = [
-        { id: 'partA', geometry: 'Box', color: 0xcc9966, position: new THREE.Vector3(5, 0.5, 5), target: new THREE.Vector3(0, 0.5, 0) },
-        { id: 'partB', geometry: 'Sphere', color: 0x996633, position: new THREE.Vector3(-5, 0.5, -5), target: new THREE.Vector3(0, 1.5, 0) },
-        { id: 'partC', geometry: 'Cylinder', color: 0x663300, position: new THREE.Vector3(5, 0.5, -5), target: new THREE.Vector3(0, 2.5, 0) }
-    ];
+    <!-- Message box for loading status and instructions -->
+    <div id="message-box" class="flex flex-col items-center">
+        <div id="loading-spinner" class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400 mb-4 hidden"></div>
+        <div id="message-content" class="text-xl font-bold">Please load a .GLB or .GLTF file.</div>
+    </div>
 
-    // --- Core Functions ---
-
-    /**
-     * Initializes the Three.js scene, camera, and renderer.
-     */
-    function initThree() {
-        // Scene (White background for "archaeologist" workspace)
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
-
-        // Camera
-        camera = new THREE.PerspectiveCamera(50, THREE_CONTAINER.clientWidth / THREE_CONTAINER.clientHeight, 0.1, 1000);
-        camera.position.set(10, 8, 10);
-
-        // Renderer
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(THREE_CONTAINER.clientWidth, THREE_CONTAINER.clientHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        THREE_CONTAINER.appendChild(renderer.domElement);
-
-        // Controls
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; 
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 5;
-        controls.maxDistance = 50;
-
-        // Lighting
-        scene.add(new THREE.AmbientLight(0x606060));
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 10);
-        scene.add(directionalLight);
+    <script>
+        // Global variables for the three.js scene
+        let scene, camera, renderer, controls, model, container;
+        const messageBox = document.getElementById('message-box');
+        const messageContent = document.getElementById('message-content');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const fileInput = document.getElementById('file-input');
         
-        // Ground Grid (Subtle gray grid for visual context)
-        const gridHelper = new THREE.GridHelper(20, 20, 0xaaaaaa, 0xcccccc);
-        gridHelper.position.y = 0.01; // Slightly above zero to prevent Z-fighting
-        scene.add(gridHelper);
+        // This is used to track if the animation loop has started
+        let isAnimating = false;
 
-        // Setup Raycaster for interaction
-        raycaster = new THREE.Raycaster();
-        pointer = new THREE.Vector2();
+        /**
+         * Initializes the Three.js scene, camera, renderer, and lighting.
+         */
+        function initScene() {
+            container = document.getElementById('viewer-container');
 
-        // Dragging Plane (Fixed at Y=0, simulating a workbench)
-        dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a202c); 
 
-        // Initialize Artifacts
-        createArtifacts();
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(
+                50, 
+                window.innerWidth / window.innerHeight, 
+                0.1, 
+                1000 
+            );
+            camera.position.set(0, 0, 5); 
 
-        // Event Listeners
-        renderer.domElement.addEventListener('pointerdown', onPointerDown);
-        renderer.domElement.addEventListener('pointermove', onPointerMove);
-        renderer.domElement.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('resize', onWindowResize, false);
-    }
-
-    /**
-     * Creates all 3D artifact fragments and their ghost targets.
-     */
-    function createArtifacts() {
-        artifactData.forEach(data => {
-            let geometry, material;
-
-            // 1. Create the Piece (Draggable Fragment)
-            switch (data.geometry) {
-                case 'Box':
-                    geometry = new THREE.BoxGeometry(1, 1, 1);
-                    break;
-                case 'Sphere':
-                    geometry = new THREE.SphereGeometry(1, 16, 16);
-                    geometry.scale(1, 0.5, 1); // Flattened sphere
-                    break;
-                case 'Cylinder':
-                    geometry = new THREE.CylinderGeometry(0.7, 0.7, 2, 32);
-                    break;
-            }
-
-            material = new THREE.MeshLambertMaterial({ color: data.color, wireframe: false, flatShading: true });
-            const piece = new THREE.Mesh(geometry, material);
-            piece.position.copy(data.position);
-            piece.userData = { id: data.id, target: data.target, isPiece: true, snapped: false };
-            scene.add(piece);
-            pieces.push(piece);
-
-
-            // 2. Create the Target (Ghost Outline)
-            const targetMaterial = new THREE.MeshBasicMaterial({ 
-                color: data.color, 
-                wireframe: true, 
-                transparent: true, 
-                opacity: 0.2 
-            });
-            const targetMesh = new THREE.Mesh(geometry, targetMaterial);
-            targetMesh.position.copy(data.target);
-            targetMesh.userData = { isTarget: true, pieceId: data.id };
-            scene.add(targetMesh);
-        });
-        updateStatus(`Place the ${artifactData.length} fragments into their outlines.`);
-    }
-
-    /**
-     * Handles the pointer down event for dragging.
-     */
-    function onPointerDown(event) {
-        // 1. Update pointer position
-        pointer.x = (event.clientX / THREE_CONTAINER.clientWidth) * 2 - 1;
-        pointer.y = -(event.clientY / THREE_CONTAINER.clientHeight) * 2 + 1;
-
-        // 2. Raycast to find intersection
-        raycaster.setFromCamera(pointer, camera);
-        const intersects = raycaster.intersectObjects(pieces.filter(p => !p.userData.snapped));
-
-        if (intersects.length > 0) {
-            controls.enabled = false; // Disable orbit controls while dragging
-            activePiece = intersects[0].object;
-
-            // Calculate offset between piece center and click point on the drag plane
-            raycaster.ray.intersectPlane(dragPlane, offset);
-            offset.sub(activePiece.position);
-
-            renderer.domElement.style.cursor = 'grabbing';
-            activePiece.material.emissive.setHex(0x333333); // Highlight piece
-        }
-    }
-
-    /**
-     * Handles the pointer move event for dragging.
-     */
-    function onPointerMove(event) {
-        if (!activePiece) return;
-
-        // 1. Update pointer position
-        pointer.x = (event.clientX / THREE_CONTAINER.clientWidth) * 2 - 1;
-        pointer.y = -(event.clientY / THREE_CONTAINER.clientHeight) * 2 + 1;
-
-        // 2. Raycast the new pointer position against the drag plane
-        raycaster.setFromCamera(pointer, camera);
-        const intersection = new THREE.Vector3();
-        raycaster.ray.intersectPlane(dragPlane, intersection);
-
-        // 3. Update piece position (move it by the intersection point minus the initial offset)
-        activePiece.position.copy(intersection.sub(offset));
-        
-        // Keep the piece slightly elevated above the plane (Y=0)
-        activePiece.position.y = activePiece.geometry.boundingSphere.radius; 
-    }
-
-    /**
-     * Handles the pointer up event for snapping and releasing.
-     */
-    function onPointerUp() {
-        if (!activePiece) return;
-
-        controls.enabled = true; // Re-enable orbit controls
-        renderer.domElement.style.cursor = 'grab';
-        activePiece.material.emissive.setHex(0x000000); // Remove highlight
-
-        checkSnap(activePiece);
-        activePiece = null;
-    }
-
-    /**
-     * Checks if the released piece is close enough to its target to snap.
-     */
-    function checkSnap(piece) {
-        if (piece.userData.snapped) return;
-
-        const targetPosition = piece.userData.target;
-        const currentPosition = piece.position;
-
-        if (currentPosition.distanceTo(targetPosition) < SNAP_THRESHOLD) {
-            // SNAP SUCCESS!
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
             
-            // 1. Lock the piece to the target's exact position
-            piece.position.copy(targetPosition);
+            // Controls setup (OrbitControls allows user to interact with the camera)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // Smooth inertia for rotation
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = true; // Allow panning
 
-            // 2. Mark as snapped and change appearance
-            piece.userData.snapped = true;
-            piece.material.color.set(piece.material.color.getHex() * 0.8); // Dim slightly to show it's fixed
-            piece.material.opacity = 1;
+            // Lighting setup
+            // 1. Hemisphere light (soft ambient light)
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+            hemiLight.position.set(0, 20, 0);
+            scene.add(hemiLight);
 
-            // 3. Find and hide the ghost target
-            const targetId = piece.userData.id;
-            scene.children.find(c => c.userData.pieceId === targetId).visible = false;
+            // 2. Directional light (for shadows and highlights)
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            dirLight.position.set(5, 5, 5);
+            scene.add(dirLight);
 
-            // 4. Update status
-            piecesSnapped++;
-            if (piecesSnapped === artifactData.length) {
-                updateStatus('ASSEMBLY COMPLETE! The artifact is whole!', 'bg-green-600 text-white shadow-lg');
-            } else {
-                updateStatus('Piece snapped! Keep assembling.', 'bg-yellow-400 text-gray-800');
+            // Handle window resizing
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        /**
+         * Clears the previous model from the scene, if one exists, to prevent memory leaks.
+         */
+        function clearScene() {
+            if (model) {
+                scene.remove(model);
+                // Dispose of geometries and materials to free GPU memory
+                model.traverse(function(object) {
+                    if (object.isMesh) {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            const materials = Array.isArray(object.material) ? object.material : [object.material];
+                            materials.forEach(m => {
+                                // Dispose of texture maps if they exist
+                                for (const key in m) {
+                                    if (m[key] && m[key].isTexture) {
+                                        m[key].dispose();
+                                    }
+                                }
+                                m.dispose();
+                            });
+                        }
+                    }
+                });
+                model = null;
             }
         }
-    }
 
-    /**
-     * Updates the status box with a message and optional styling.
-     */
-    function updateStatus(message, classes = 'bg-gray-700 text-white') {
-        STATUS_BOX.textContent = `Status: ${message}`;
-        STATUS_BOX.className = `px-4 py-2 rounded-full text-sm font-mono transition-all duration-300 ${classes}`;
-    }
+        /**
+         * Loads the GLB/GLTF file content from an ArrayBuffer using GLTFLoader.parse.
+         */
+        function loadModelFromBuffer(buffer) {
+            clearScene(); // Clear previous model
+            messageBox.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            messageContent.textContent = 'Parsing 3D Model...';
+            
+            const loader = new THREE.GLTFLoader();
 
-    /**
-     * Handles window resizing.
-     */
-    function onWindowResize() {
-        camera.aspect = THREE_CONTAINER.clientWidth / THREE_CONTAINER.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(THREE_CONTAINER.clientWidth, THREE_CONTAINER.clientHeight);
-    }
+            loader.parse(
+                buffer,
+                '', // Base path is empty since we are loading from memory
+                // On Load Success
+                function (gltf) {
+                    model = gltf.scene;
+                    scene.add(model);
+                    console.log('Model loaded successfully.', model);
 
-    // --- Initialization ---
+                    // --- Auto-center and Re-frame Logic ---
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+                    
+                    // Reposition the model so its center is at the scene origin (0,0,0)
+                    model.position.sub(center); 
+                    controls.target.set(0, 0, 0); // Set controls target to the new center
 
-    window.onload = function () {
-        initThree();
-        animate();
-    }
+                    // Adjust camera distance based on model size for proper framing
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const fov = camera.fov * (Math.PI / 180);
+                    let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+                    cameraDistance *= 1.5; // Add some padding
 
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update(); // only required if controls.enableDamping is true
-        renderer.render(scene, camera);
-    }
-</script>
+                    // Reset camera position for a clean start
+                    camera.position.set(cameraDistance, cameraDistance, cameraDistance);
+                    camera.lookAt(model.position);
+                    controls.update(); 
+                    
+                    // Hide loading message
+                    messageBox.classList.add('hidden');
+                    
+                    // Start animation loop only once
+                    if (!isAnimating) { 
+                       animate(); 
+                       isAnimating = true;
+                    }
+                },
+                // On Error
+                function (error) {
+                    console.error('An error occurred parsing the model:', error);
+                    messageContent.textContent = 'Error parsing model. Please check the file format.';
+                    loadingSpinner.classList.add('hidden');
+                    messageBox.classList.remove('hidden');
+                }
+            );
+        }
+
+        /**
+         * Handles the file input change event, reading the file into memory.
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            messageBox.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            messageContent.textContent = `Reading ${file.name}...`;
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // FileReader result is the ArrayBuffer needed by GLTFLoader.parse
+                loadModelFromBuffer(e.target.result);
+            };
+
+            reader.onerror = function(e) {
+                console.error("FileReader failed:", e);
+                messageContent.textContent = 'Failed to read file.';
+                loadingSpinner.classList.add('hidden');
+            };
+
+            // Read the file as an ArrayBuffer
+            reader.readAsArrayBuffer(file);
+        }
+
+
+        /**
+         * The main animation loop.
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Update controls for smooth damping effect
+            renderer.render(scene, camera);
+        }
+
+        /**
+         * Handles resizing the canvas when the window size changes.
+         */
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Execution ---
+        window.onload = function() {
+            // Initialize the scene
+            initScene();
+
+            // Set up event listener for the file input
+            fileInput.addEventListener('change', handleFileSelect, false);
+        };
+
+    </script>
 </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
