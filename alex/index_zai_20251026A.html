@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArchaeoVision - 3D Archaeological Explorer</title>
+    
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2B48C;
+            --accent-color: #CD853F;
+            --dark-color: #3E2723;
+            --light-color: #FFF8E1;
+            --text-color: #333;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--secondary-color);
+        }
+        
+        /* Main Container */
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: transform 0.3s;
+        }
+        
+        .sidebar h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--accent-color);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: rgba(210, 180, 140, 0.1);
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(210, 180, 140, 0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .upload-area i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        /* Model Parts Section */
+        .model-parts {
+            margin-bottom: 2rem;
+        }
+        
+        .part-item {
+            background-color: var(--light-color);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .part-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .part-item.selected {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .part-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .part-visibility {
+            cursor: pointer;
+            color: var(--primary-color);
+            padding: 0.3rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .part-visibility:hover {
+            background-color: rgba(139, 69, 19, 0.1);
+        }
+        
+        /* Controls Section */
+        .controls-section {
+            margin-bottom: 2rem;
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-btn:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent-color);
+        }
+        
+        .slider-control {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--secondary-color);
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        /* 3D Viewer */
+        .viewer-container {
+            flex: 1;
+            position: relative;
+            background-color: #f5f5f5;
+            overflow: hidden;
+        }
+        
+        #viewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .viewer-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+        
+        .viewer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .info-item i {
+            color: var(--primary-color);
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--secondary-color);
+            border-top: 6px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        /* Mobile Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 80px;
+                height: calc(100vh - 80px);
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .mobile-toggle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            nav {
+                display: none;
+            }
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: var(--dark-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-landmark"></i>
+                <h1>ArchaeoVision</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#"><i class="fas fa-museum"></i> Collection</a></li>
+                    <li><a href="#"><i class="fas fa-book"></i> Research</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <div class="upload-section">
+                <h2><i class="fas fa-upload"></i> Upload Model</h2>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click to upload or drag and drop</p>
+                    <p style="font-size: 0.8rem; color: #666;">GLB files only</p>
+                </div>
+                <input type="file" id="file-input" accept=".glb">
+            </div>
+            
+            <div class="model-parts">
+                <h2><i class="fas fa-cubes"></i> Model Parts</h2>
+                <div id="parts-list">
+                    <p style="color: #666; font-style: italic;">No model loaded</p>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <h2><i class="fas fa-sliders-h"></i> Controls</h2>
+                
+                <div class="control-group">
+                    <label>Transform Mode</label>
+                    <div class="control-buttons">
+                        <button class="control-btn" id="translate-btn">
+                            <i class="fas fa-arrows-alt"></i> Move
+                        </button>
+                        <button class="control-btn" id="rotate-btn">
+                            <i class="fas fa-sync-alt"></i> Rotate
+                        </button>
+                        <button class="control-btn" id="scale-btn">
+                            <i class="fas fa-expand-alt"></i> Scale
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Camera</label>
+                    <div class="control-buttons">
+                        <button class="control-btn" id="reset-camera-btn">
+                            <i class="fas fa-undo"></i> Reset View
+                        </button>
+                        <button class="control-btn" id="fit-camera-btn">
+                            <i class="fas fa-compress"></i> Fit to View
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Lighting</label>
+                    <div class="slider-control">
+                        <input type="range" id="lighting-slider" min="0" max="200" value="150">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Actions</label>
+                    <div class="control-buttons">
+                        <button class="control-btn" id="explode-btn">
+                            <i class="fas fa-bomb"></i> Explode
+                        </button>
+                        <button class="control-btn" id="reset-btn">
+                            <i class="fas fa-redo"></i> Reset Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="viewer-container">
+            <div id="viewer"></div>
+            
+            <div class="viewer-overlay">
+                <div class="viewer-info">
+                    <div class="info-item">
+                        <i class="fas fa-mouse"></i>
+                        <span>Left click + drag: Rotate</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-search-plus"></i>
+                        <span>Scroll: Zoom</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-hand-paper"></i>
+                        <span>Right click + drag: Pan</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading-screen" id="loading-screen">
+                <div class="spinner"></div>
+                <p class="loading-text">Loading 3D Model...</p>
+            </div>
+        </main>
+    </div>
+    
+    <button class="mobile-toggle" id="mobile-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        // Three.js Scene Setup
+        let scene, camera, renderer, controls, transformControls;
+        let model = null;
+        let modelParts = [];
+        let selectedPart = null;
+        let animationId = null;
+        let directionalLight, ambientLight;
+        
+        // Initialize the 3D scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf5f5f5);
+            
+            // Create camera
+            const container = document.getElementById('viewer');
+            camera = new THREE.PerspectiveCamera(
+                75,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 0, 5);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+            
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Add transform controls
+            transformControls = new THREE.TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('dragging-changed', function(event) {
+                controls.enabled = !event.value;
+            });
+            scene.add(transformControls);
+            
+            // Add lights - BRIGHTER DEFAULTS
+            ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Increased from 0.6 to 1.2
+            scene.add(ambientLight);
+            
+            directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Increased from 0.8 to 1.5
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+            
+            // Add additional fill light for even brighter scene
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+            
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10, 0x888888, 0xcccccc);
+            scene.add(gridHelper);
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Animation loop
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            const container = document.getElementById('viewer');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // Load GLB model
+        function loadModel(file) {
+            showLoading(true);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.GLTFLoader();
+                loader.parse(e.target.result, '', function(gltf) {
+                    // Remove existing model
+                    if (model) {
+                        scene.remove(model);
+                    }
+                    
+                    // Add new model
+                    model = gltf.scene;
+                    scene.add(model);
+                    
+                    // Extract model parts
+                    extractModelParts(model);
+                    
+                    // Center and fit model to view
+                    centerModel();
+                    fitModelToView();
+                    
+                    showLoading(false);
+                    showToast('Model loaded successfully!');
+                }, function(error) {
+                    console.error('Error loading model:', error);
+                    showLoading(false);
+                    showToast('Error loading model. Please try again.');
+                });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Extract model parts from the loaded model
+        function extractModelParts(object) {
+            modelParts = [];
+            const partsList = document.getElementById('parts-list');
+            partsList.innerHTML = '';
+            
+            object.traverse(function(child) {
+                if (child.isMesh) {
+                    modelParts.push(child);
+                    
+                    // Create part item in the UI
+                    const partItem = document.createElement('div');
+                    partItem.className = 'part-item';
+                    partItem.dataset.partId = modelParts.length - 1;
+                    
+                    const partName = document.createElement('div');
+                    partName.className = 'part-name';
+                    partName.innerHTML = `<i class="fas fa-cube"></i> ${child.name || `Part ${modelParts.length}`}`;
+                    
+                    const partVisibility = document.createElement('div');
+                    partVisibility.className = 'part-visibility';
+                    partVisibility.innerHTML = '<i class="fas fa-eye"></i>';
+                    partVisibility.dataset.partId = modelParts.length - 1;
+                    
+                    partItem.appendChild(partName);
+                    partItem.appendChild(partVisibility);
+                    
+                    // Add click event to select part
+                    partItem.addEventListener('click', function(e) {
+                        // Don't select if clicking on visibility icon
+                        if (!e.target.closest('.part-visibility')) {
+                            selectPart(modelParts.length - 1);
+                        }
+                    });
+                    
+                    // Add click event to toggle visibility - FIXED SELECTOR
+                    partVisibility.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const partId = parseInt(this.dataset.partId);
+                        togglePartVisibility(partId, this);
+                    });
+                    
+                    partsList.appendChild(partItem);
+                }
+            });
+            
+            if (modelParts.length === 0) {
+                partsList.innerHTML = '<p style="color: #666; font-style: italic;">No parts found in model</p>';
+            }
+        }
+        
+        // Select a model part
+        function selectPart(index) {
+            // Update UI
+            document.querySelectorAll('.part-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelector(`.part-item[data-part-id="${index}"]`).classList.add('selected');
+            
+            // Update transform controls
+            selectedPart = modelParts[index];
+            transformControls.attach(selectedPart);
+        }
+        
+        // Toggle part visibility - FIXED TO TARGET CORRECT ICON
+        function togglePartVisibility(index, iconElement) {
+            const part = modelParts[index];
+            part.visible = !part.visible;
+            
+            // Use the passed icon element instead of querying
+            const visibilityIcon = iconElement.querySelector('i');
+            visibilityIcon.className = part.visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+        }
+        
+        // Center the model
+        function centerModel() {
+            if (!model) return;
+            
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            
+            model.position.sub(center);
+        }
+        
+        // Fit model to view
+        function fitModelToView() {
+            if (!model) return;
+            
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            
+            camera.position.set(cameraZ, cameraZ, cameraZ);
+            camera.lookAt(0, 0, 0);
+            controls.update();
+        }
+        
+        // Explode model parts
+        function explodeModel() {
+            if (!model || modelParts.length === 0) return;
+            
+            modelParts.forEach((part, index) => {
+                const direction = new THREE.Vector3(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                ).normalize();
+                
+                const distance = 1 + index * 0.2;
+                const targetPosition = direction.multiplyScalar(distance);
+                
+                // Animate the explosion
+                const startPosition = part.position.clone();
+                const animationDuration = 1000;
+                const startTime = Date.now();
+                
+                function animateExplosion() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / animationDuration, 1);
+                    
+                    part.position.lerpVectors(startPosition, targetPosition, progress);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateExplosion);
+                    }
+                }
+                
+                animateExplosion();
+            });
+        }
+        
+        // Reset model parts
+        function resetModel() {
+            if (!model || modelParts.length === 0) return;
+            
+            modelParts.forEach(part => {
+                part.position.set(0, 0, 0);
+                part.rotation.set(0, 0, 0);
+                part.scale.set(1, 1, 1);
+                part.visible = true;
+            });
+            
+            // Update UI - FIXED TO TARGET ALL ICONS CORRECTLY
+            document.querySelectorAll('.part-visibility i').forEach(icon => {
+                icon.className = 'fas fa-eye';
+            });
+            
+            centerModel();
+            fitModelToView();
+            
+            if (selectedPart) {
+                transformControls.attach(selectedPart);
+            }
+        }
+        
+        // Show/hide loading screen
+        function showLoading(show) {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (show) {
+                loadingScreen.classList.remove('hidden');
+            } else {
+                loadingScreen.classList.add('hidden');
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            
+            // File upload
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = 'rgba(210, 180, 140, 0.3)';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.backgroundColor = 'rgba(210, 180, 140, 0.1)';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = 'rgba(210, 180, 140, 0.1)';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.glb')) {
+                    loadModel(files[0]);
+                } else {
+                    showToast('Please upload a valid GLB file');
+                }
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    loadModel(e.target.files[0]);
+                }
+            });
+            
+            // Transform controls
+            document.getElementById('translate-btn').addEventListener('click', function() {
+                transformControls.setMode('translate');
+                updateActiveButton(this);
+            });
+            
+            document.getElementById('rotate-btn').addEventListener('click', function() {
+                transformControls.setMode('rotate');
+                updateActiveButton(this);
+            });
+            
+            document.getElementById('scale-btn').addEventListener('click', function() {
+                transformControls.setMode('scale');
+                updateActiveButton(this);
+            });
+            
+            // Camera controls
+            document.getElementById('reset-camera-btn').addEventListener('click', () => {
+                camera.position.set(0, 0, 5);
+                camera.lookAt(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('fit-camera-btn').addEventListener('click', () => {
+                fitModelToView();
+            });
+            
+            // Lighting control - UPDATED FOR BRIGHTER DEFAULT
+            document.getElementById('lighting-slider').addEventListener('input', function() {
+                const intensity = this.value / 100;
+                directionalLight.intensity = intensity * 1.5; // Updated multiplier
+                ambientLight.intensity = intensity * 1.2; // Updated multiplier
+            });
+            
+            // Model actions
+            document.getElementById('explode-btn').addEventListener('click', explodeModel);
+            document.getElementById('reset-btn').addEventListener('click', resetModel);
+            
+            // Mobile toggle
+            document.getElementById('mobile-toggle').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+            
+            // Set default transform mode
+            document.getElementById('translate-btn').click();
+        });
+        
+        // Update active button state
+        function updateActiveButton(activeButton) {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (btn.id.includes('btn') && !btn.id.includes('camera') && !btn.id.includes('explode') && !btn.id.includes('reset')) {
+                    btn.classList.remove('active');
+                }
+            });
+            activeButton.classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
