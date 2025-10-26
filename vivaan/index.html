@@ -1,251 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArchDiscovery: Fragmented Artifact 3D View</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Set up the body and viewer to take up the full viewport */
-        body {
-            margin: 0;
-            overflow: hidden; /* Prevent scrolling */
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark background for a premium feel */
-        }
-        #viewer-container {
-            width: 100vw;
-            height: 100vh;
-            position: absolute; /* Allows header/footer to overlap */
-            top: 0;
-            left: 0;
-        }
-        /* Style the message box */
-        #message-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 1.5rem 2.5rem;
-            background-color: rgba(30, 41, 59, 0.95);
-            color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
-            z-index: 10;
-            min-width: 300px;
-            text-align: center;
-            backdrop-filter: blur(5px);
-        }
-        /* Ensure the canvas covers the container */
-        canvas {
-            display: block;
-        }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
-</head>
-<body>
-    <div id="viewer-container">
-        </div>
 
-    <div class="absolute top-0 left-0 p-6 z-20">
-        <h1 class="text-4xl font-extrabold text-white leading-tight">
-            ARCH<span class="text-indigo-400">DISCOVERY</span>
-        </h1>
-        <h2 class="text-2xl text-slate-200 mt-2">
-            Artifact: <b class="text-green-400">Fragmented Vessel (ID #003)</b>
-        </h2>
-        <p class="text-sm text-slate-400 max-w-sm mt-1">
-            *Controls: Click/Drag to **Rotate**, Scroll to **Zoom***
-        </p>
-    </div>
+@@ -74,6 +74,10 @@
+     const messageContent = document.getElementById('message-content');
+     const loadingSpinner = document.getElementById('loading-spinner');
+     let isAnimating = false;
 
-    <div id="message-box" class="flex flex-col items-center">
-        <div id="loading-spinner" class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400 mb-4"></div>
-        <div id="message-content" class="text-xl font-bold">Loading Artifact...</div>
-    </div>
++    // Define the name of the uploaded GLB file
++    const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
 
-    <script>
-        // Global variables for the three.js scene
-        let scene, camera, renderer, controls, model, container;
-        const messageBox = document.getElementById('message-box');
-        const messageContent = document.getElementById('message-content');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        let isAnimating = false;
-        
-        // Define the name of the uploaded GLB file
-        const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
+     /**
+      * Initializes the Three.js scene, camera, renderer, and lighting/environment.
+@@ -192,15 +196,13 @@
+     }
 
-
-        /**
-         * Initializes the Three.js scene, camera, renderer, and lighting/environment.
-         */
-        function initScene() {
-            container = document.getElementById('viewer-container');
-
-            // Scene setup
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a202c); 
-
-            // Camera setup
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 5); 
-
-            // Renderer setup
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
-            container.appendChild(renderer.domElement);
-            
-            // Controls setup
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = true;
-
-            // Lighting setup
-            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
-            scene.add(hemiLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
-            dirLight.position.set(5, 5, 5);
-            scene.add(dirLight);
-
-            // Load Environment Map (HDR)
-            const pmremGenerator = new THREE.PMREMGenerator(renderer);
-            pmremGenerator.compileEquirectangularShader();
-
-            new THREE.RGBELoader()
-                .setDataType(THREE.HalfFloatType)
-                .load(
-                    'https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr',
-                    function (texture) {
-                        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-                        scene.environment = envMap;
-                        texture.dispose();
-                        pmremGenerator.dispose();
-                    }
-                );
-
-            window.addEventListener('resize', onWindowResize, false);
-            
-            // Start the main loading process
-            loadArtifactFromFile();
-        }
-
-        /**
-         * Loads the GLB/GLTF file content from an ArrayBuffer using GLTFLoader.parse.
-         */
-        function loadModelFromBuffer(buffer) {
-            if (model) scene.remove(model); // Clear previous model
-            messageContent.textContent = 'Parsing 3D Model...';
-            
-            const loader = new THREE.GLTFLoader();
-
-            loader.parse(
-                buffer,
-                '', 
-                function (gltf) {
-                    model = gltf.scene;
-                    
-                    model.traverse(function(object) {
-                        if (object.isMesh) {
-                            object.castShadow = true;
-                            object.receiveShadow = true;
-                        }
-                    });
-
-                    scene.add(model);
-                    
-                    // --- Auto-center and Re-frame Logic ---
-                    const box = new THREE.Box3().setFromObject(model);
-                    const size = box.getSize(new THREE.Vector3());
-                    const center = box.getCenter(new THREE.Vector3());
-                    
-                    model.position.sub(center); 
-                    controls.target.set(0, 0, 0); 
-
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    const fov = camera.fov * (Math.PI / 180);
-                    let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
-                    cameraDistance *= 1.5; 
-
-                    camera.position.set(cameraDistance, cameraDistance, cameraDistance);
-                    camera.lookAt(model.position);
-                    controls.update(); 
-                    
-                    // Hide loading message
-                    messageBox.classList.add('hidden');
-                    
-                    // Start animation loop only once
-                    if (!isAnimating) { 
-                        animate(); 
-                        isAnimating = true;
-                    }
-                },
-                function (error) {
-                    console.error('An error occurred parsing the model:', error);
-                    messageContent.textContent = 'Error loading model.';
-                    loadingSpinner.classList.add('hidden');
-                }
-            );
-        }
-
-        /**
-         * Loads the uploaded GLB file using the Fetch API.
-         * IMPORTANT: This assumes 'artifact3-fractured_16_4pcs (2).glb' is in the same folder as this HTML file.
-         */
-        async function loadArtifactFromFile() {
-            messageContent.textContent = `Fetching ${ARTIFACT_FILE}...`;
-            try {
-                // CORRECTED: Fetch the file directly by name
-                const fileResponse = await fetch(ARTIFACT_FILE);
-                
-                if (!fileResponse.ok) {
-                    throw new Error(`HTTP error! status: ${fileResponse.status}`);
-                }
-                
-                // Get the file content as an ArrayBuffer
-                const buffer = await fileResponse.arrayBuffer();
-                
-                // Pass the buffer to the GLTFLoader
-                loadModelFromBuffer(buffer);
-
-            } catch (error) {
-                console.error("Failed to load artifact file:", error);
-                messageContent.textContent = `Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`;
-                loadingSpinner.classList.add('hidden');
-            }
-        }
-
-
-        /**
-         * The main animation loop.
-         */
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update(); 
-            renderer.render(scene, camera);
-        }
-
-        /**
-         * Handles resizing the canvas when the window size changes.
-         */
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        // --- Execution ---
-        window.onload = function() {
-            initScene();
-        };
-
-    </script>
-</body>
-</html>
+     /**
+      * SIMULATES loading the uploaded file from the server.
+      * In a real application, this would be an AJAX or Fetch call.
+      * Loads the uploaded GLB file using the Fetch API.
+      * IMPORTANT: This assumes 'artifact3-fractured_16_4pcs (2).glb' is in the same folder as this HTML file.
+      */
+     async function loadArtifactFromFile() {
+-        messageContent.textContent = 'Fetching artifact3-fractured_16_4pcs (2).glb...';
++        messageContent.textContent = `Fetching ${ARTIFACT_FILE}...`;
+         try {
+-            // Fetch the uploaded GLB file content via its unique ID
+-            const fetchId = "uploaded:artifact3-fractured_16_4pcs (2).glb";
+-            const fileResponse = await fetch(`data/${fetchId}`);
++            // Fetch the file directly by name
++            const fileResponse = await fetch(ARTIFACT_FILE);
+             if (!fileResponse.ok) {
+                 throw new Error(`HTTP error! status: ${fileResponse.status}`);
+             }
+@@ -214,7 +216,7 @@
+         } catch (error) {
+             console.error("Failed to load artifact file:", error);
+-            messageContent.textContent = 'Error: Could not retrieve artifact file.';
++            messageContent.textContent = `Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`;
+             loadingSpinner.classList.add('hidden');
+         }
+     }
