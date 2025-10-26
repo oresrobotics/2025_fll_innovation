@@ -1,40 +1,79 @@
+const messageContent = document.getElementById('message-content');
+const loadingSpinner = document.getElementById('loading-spinner');
+let isAnimating = false;
 
-@@ -74,6 +74,10 @@
-     const messageContent = document.getElementById('message-content');
-     const loadingSpinner = document.getElementById('loading-spinner');
-     let isAnimating = false;
+// Define the name of the uploaded GLB file
+const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
 
-+    // Define the name of the uploaded GLB file
-+    const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
+/**
+ * Initializes the Three.js scene, camera, renderer, and lighting/environment.
+ * (Implementation not shown here)
+ */
+function initializeScene() {
+    // Your Three.js setup logic goes here
+}
 
-     /**
-      * Initializes the Three.js scene, camera, renderer, and lighting/environment.
-@@ -192,15 +196,13 @@
-     }
+/**
+ * Displays a loading message and shows the spinner.
+ * @param {string} text - Message to display
+ */
+function showLoading(text) {
+    messageContent.textContent = text;
+    loadingSpinner.classList.remove('hidden');
+}
 
-     /**
-      * SIMULATES loading the uploaded file from the server.
-      * In a real application, this would be an AJAX or Fetch call.
-      * Loads the uploaded GLB file using the Fetch API.
-      * IMPORTANT: This assumes 'artifact3-fractured_16_4pcs (2).glb' is in the same folder as this HTML file.
-      */
-     async function loadArtifactFromFile() {
--        messageContent.textContent = 'Fetching artifact3-fractured_16_4pcs (2).glb...';
-+        messageContent.textContent = `Fetching ${ARTIFACT_FILE}...`;
-         try {
--            // Fetch the uploaded GLB file content via its unique ID
--            const fetchId = "uploaded:artifact3-fractured_16_4pcs (2).glb";
--            const fileResponse = await fetch(`data/${fetchId}`);
-+            // Fetch the file directly by name
-+            const fileResponse = await fetch(ARTIFACT_FILE);
-             if (!fileResponse.ok) {
-                 throw new Error(`HTTP error! status: ${fileResponse.status}`);
-             }
-@@ -214,7 +216,7 @@
-         } catch (error) {
-             console.error("Failed to load artifact file:", error);
--            messageContent.textContent = 'Error: Could not retrieve artifact file.';
-+            messageContent.textContent = `Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`;
-             loadingSpinner.classList.add('hidden');
-         }
-     }
+/**
+ * Hides the loading spinner and optionally updates the message.
+ * @param {string} [text] - Optional message to display
+ */
+function hideLoading(text) {
+    if (text) messageContent.textContent = text;
+    loadingSpinner.classList.add('hidden');
+}
+
+/**
+ * Fetches the GLB file and returns its ArrayBuffer.
+ * @returns {Promise<ArrayBuffer>}
+ */
+async function fetchGLBFile() {
+    showLoading(`Fetching ${ARTIFACT_FILE}...`);
+    try {
+        const response = await fetch(ARTIFACT_FILE);
+        if (!response.ok) {
+throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        const fileSizeKB = (buffer.byteLength / 1024).toFixed(2);
+        console.log(`Successfully loaded ${ARTIFACT_FILE} (${fileSizeKB} KB)`);
+        hideLoading(`Loaded ${ARTIFACT_FILE} (${fileSizeKB} KB)`);
+
+        return buffer;
+    } catch (error) {
+        console.error("Failed to load artifact file:", error);
+        hideLoading(`Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`);
+        throw error;
+    }
+}
+
+/**
+ * Loads the artifact and initializes the viewer.
+ */
+async function loadArtifactFromFile() {
+    try {
+        const glbData = await fetchGLBFile();
+
+        // Placeholder: Use Three.js GLTFLoader to parse and display the model
+        // const loader = new THREE.GLTFLoader();
+        // const glbBlob = new Blob([glbData], { type: 'model/gltf-binary' });
+        // const glbUrl = URL.createObjectURL(glbBlob);
+        // loader.load(glbUrl, function (gltf) {
+        //     scene.add(gltf.scene);
+        // });
+console.log("Artifact loaded and ready for rendering.");
+    } catch (error) {
+        // Error already handled in fetchGLBFile
+    }
+}
+
+
