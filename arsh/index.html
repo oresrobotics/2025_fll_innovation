@@ -1,35 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Viewer (No Shadows, True Color)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Archaeology 3D Viewer</title>
 <style>
-  body { margin: 0; overflow: hidden; background: #1a1a1a; color: #fff; }
-  canvas { display: block; }
-  #controls-container {
-    position: absolute; top: 20px; left: 20px; z-index: 10;
-    background: rgba(0,0,0,0.6); padding: 10px; border-radius: 5px;
-    display: flex; gap: 10px;
+  body {
+    margin: 0;
+    background: linear-gradient(180deg, #101010, #161616);
+    color: #fff;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
   }
-  .control-button {
-    border: none; border-radius: 4px;
-    padding: 8px 15px; background: #007bff; color: #fff;
+
+  #frame {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    right: 300px;
+    bottom: 40px;
+    border: 4px solid #00bfff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 191, 255, 0.4);
+    overflow: hidden;
   }
-  .control-button:hover { background: #0056b3; }
+
+  canvas { width: 100%; height: 100%; display: block; }
+
+  #toolbar {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; padding: 8px 14px;
+    background: rgba(0,0,0,0.7); border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+  }
+
+  .btn {
+    border: none; border-radius: 5px;
+    background: linear-gradient(90deg, #007bff, #00bfff);
+    color: #fff; font-weight: 600;
+    padding: 8px 14px; cursor: pointer;
+  }
+
+  .btn:hover { transform: scale(1.05); }
+
+  #recommend-panel {
+    position: absolute;
+    top: 40px; right: 40px; bottom: 40px;
+    width: 240px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+    padding: 15px;
+    overflow-y: auto;
+  }
+
+  #recommend-panel h2 {
+    text-align: center;
+    color: #00bfff;
+    margin-top: 0;
+  }
+
+  #recommendations {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  input[type="file"] {
+    color: white;
+  }
 </style>
 </head>
-<body>
 
-<div id="controls-container">
-  <input type="file" id="file-input" accept=".glb,.gltf" multiple />
-  <button id="clear-button" class="control-button">Clear</button>
-  <button id="undo-button" class="control-button" disabled>Undo</button>
-  <button id="redo-button" class="control-button" disabled>Redo</button>
-  <button id="reset-button" class="control-button">Reset</button>
-  <button id="rotate-button" class="control-button">Rotate 90°</button>
+<body>
+<div id="toolbar">
+  <input type="file" id="file-input" accept=".glb,.gltf,image/*" multiple>
+  <button class="btn" id="reset-btn">Reset</button>
+  <button class="btn" id="clear-btn">Clear</button>
+  <button class="btn" id="rotate-btn">Rotate 90°</button>
 </div>
 
+<div id="frame"><canvas id="webgl"></canvas></div>
+
+<div id="recommend-panel">
+  <h2>AI Archaeology</h2>
+  <p>Upload images or 3D models of artifacts to see automatic recommendations.</p>
+  <hr />
+  <div id="recommendations">Awaiting uploads...</div>
+</div>
+
+<!-- 3D + AI imports -->
 <script type="importmap">
 {
   "imports": {
@@ -38,148 +98,164 @@
   }
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
 
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { DragControls } from 'three/addons/controls/DragControls.js';
 
-let scene, camera, renderer, orbitControls;
-const loadedModels = [];
-const history = [];
-let historyIndex = -1;
+let scene, camera, renderer, orbit, drag;
+const models = [];
+let mobileNetModel;
 
-init();
+// Load TensorFlow model
+(async function initAI() {
+  mobileNetModel = await mobilenet.load();
+  document.getElementById('recommendations').innerHTML = "AI ready. Please upload an image or model.";
+})();
+
+initScene();
 animate();
 
-function init() {
+function initScene() {
+  const canvas = document.getElementById('webgl');
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x202020);
+  camera = new THREE.PerspectiveCamera(70, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+  camera.position.set(4, 3, 7);
 
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(3, 3, 6);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NoToneMapping; // no tone mapping
-  renderer.shadowMap.enabled = false;
-  document.body.appendChild(renderer.domElement);
 
-  // single global light (soft, neutral)
-  const ambient = new THREE.AmbientLight(0xffffff, 2.0);
-  scene.add(ambient);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.8));
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-  // ensure renderer brightness without shadow/directional contrast
-  const fill = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.5);
-  scene.add(fill);
+  orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
 
-  orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.enableDamping = true;
-  orbitControls.addEventListener('end', recordManualOrbit);
+  const grid = new THREE.GridHelper(40, 40, 0x555555, 0x333333);
+  scene.add(grid);
 
-  document.getElementById('file-input').addEventListener('change', onFileSelected);
-  document.getElementById('clear-button').addEventListener('click', clearModels);
-  document.getElementById('undo-button').addEventListener('click', undo);
-  document.getElementById('redo-button').addEventListener('click', redo);
-  document.getElementById('reset-button').addEventListener('click', resetView);
-  document.getElementById('rotate-button').addEventListener('click', rotateView90);
-  window.addEventListener('resize', onWindowResize);
+  window.addEventListener('resize', () => {
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  });
 
-  recordHistoryEntry(orbitControls.getAzimuthalAngle());
-}
-
-function onFileSelected(event) {
-  const files = event.target.files;
-  if (files.length === 0) return;
-  const loader = new GLTFLoader();
-  clearModels(false);
-
-  for (const file of files) {
-    const url = URL.createObjectURL(file);
-    loader.load(url, (gltf) => {
-      const model = gltf.scene;
-
-      model.traverse((child) => {
-        if (child.isMesh && child.material) {
-          // keep texture and color, disable reflections
-          child.material.envMap = null;
-          child.material.metalness = 0;
-          child.material.roughness = 1;
-          child.material.needsUpdate = true;
-        }
-      });
-
-      scene.add(model);
-      loadedModels.push(model);
-      URL.revokeObjectURL(url);
-      frameAllModels();
-      recordHistoryEntry(orbitControls.getAzimuthalAngle());
-    });
-  }
+  document.getElementById('file-input').addEventListener('change', handleUpload);
+  document.getElementById('reset-btn').addEventListener('click', resetCamera);
+  document.getElementById('clear-btn').addEventListener('click', clearScene);
+  document.getElementById('rotate-btn').addEventListener('click', () => rotateCamera(90));
 }
 
 function animate() {
   requestAnimationFrame(animate);
-  orbitControls.update();
+  orbit.update();
   renderer.render(scene, camera);
 }
 
-// rotation history functions (unchanged)
-function recordManualOrbit() {
-  const angle = orbitControls.getAzimuthalAngle();
-  if (historyIndex >= 0 && Math.abs(angle - history[historyIndex]) < 0.001) return;
-  recordHistoryEntry(angle);
+function resetCamera() {
+  orbit.reset();
+  fitCameraToObjects();
 }
-function recordHistoryEntry(angle) {
-  history.splice(historyIndex + 1);
-  history.push(angle);
-  historyIndex = history.length - 1;
-  updateUndoRedoButtons();
+
+function clearScene() {
+  models.forEach(m => scene.remove(m));
+  models.length = 0;
+  document.getElementById('recommendations').innerHTML = "Scene cleared.";
 }
-function applyRotationFromHistory(angle) {
-  const delta = angle - orbitControls.getAzimuthalAngle();
-  orbitControls.object.rotation.y += delta;
-  orbitControls.update();
+
+function rotateCamera(deg) {
+  camera.position.applyAxisAngle(new THREE.Vector3(0,1,0), THREE.MathUtils.degToRad(deg));
+  orbit.update();
 }
-function undo() { if (historyIndex > 0) applyRotationFromHistory(history[--historyIndex]); }
-function redo() { if (historyIndex < history.length - 1) applyRotationFromHistory(history[++historyIndex]); }
-function updateUndoRedoButtons() {
-  document.getElementById('undo-button').disabled = historyIndex <= 0;
-  document.getElementById('redo-button').disabled = historyIndex >= history.length - 1;
+
+async function handleUpload(event) {
+  const files = event.target.files;
+  for (const file of files) {
+    if (file.name.match(/\.(glb|gltf)$/i)) {
+      loadGLTF(file);
+    } else if (file.type.startsWith('image/')) {
+      const imgURL = URL.createObjectURL(file);
+      const recs = await analyzeArtifact(imgURL);
+      URL.revokeObjectURL(imgURL);
+      showRecommendations(file.name, recs);
+    }
+  }
 }
-function rotateView90() {
-  orbitControls.object.rotation.y += Math.PI / 2;
-  orbitControls.update();
-  recordHistoryEntry(orbitControls.getAzimuthalAngle());
+
+function loadGLTF(file) {
+  const loader = new GLTFLoader();
+  const url = URL.createObjectURL(file);
+
+  loader.load(url, (gltf) => {
+    const model = gltf.scene;
+    model.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material.envMap = null;
+        child.material.metalness = 0;
+        child.material.roughness = 1;
+        child.material.needsUpdate = true;
+      }
+    });
+    scene.add(model);
+    models.push(model);
+    URL.revokeObjectURL(url);
+
+    updateDragControls();
+    fitCameraToObjects();
+    document.getElementById('recommendations').innerHTML =
+      "3D model loaded. You can rotate and move it. Try uploading artifact images for analysis.";
+  });
 }
-function resetView() {
-  orbitControls.reset();
-  history.length = 0;
-  historyIndex = -1;
-  recordHistoryEntry(orbitControls.getAzimuthalAngle());
+
+function updateDragControls() {
+  if (drag) drag.deactivate();
+  drag = new DragControls(models, camera, renderer.domElement);
+  drag.addEventListener('dragstart', () => orbit.enabled = false);
+  drag.addEventListener('dragend', () => orbit.enabled = true);
 }
-function clearModels(clearHistory = true) {
-  for (const model of loadedModels) scene.remove(model);
-  loadedModels.length = 0;
-  if (clearHistory) resetView();
-}
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-function frameAllModels() {
-  if (!loadedModels.length) return;
+
+function fitCameraToObjects() {
+  if (!models.length) return;
   const box = new THREE.Box3();
-  loadedModels.forEach(m => box.expandByObject(m));
-  const size = box.getSize(new THREE.Vector3()).length();
+  models.forEach(o => box.expandByObject(o));
   const center = box.getCenter(new THREE.Vector3());
-  orbitControls.target.copy(center);
+  const size = box.getSize(new THREE.Vector3()).length();
+  orbit.target.copy(center);
   camera.position.copy(center.clone().add(new THREE.Vector3(size, size, size)));
-  camera.lookAt(center);
-  orbitControls.update();
+  orbit.update();
+}
+
+// --- AI PART ---
+async function analyzeArtifact(imageURL) {
+  if (!mobileNetModel) return ["AI model not ready."];
+  const img = document.createElement('img');
+  img.src = imageURL;
+  await new Promise(res => { img.onload = res; });
+
+  const predictions = await mobileNetModel.classify(img);
+  const result = predictions.map(p => `${p.className} (${(p.probability * 100).toFixed(1)}%)`);
+
+  // Map results to archaeological recommendations
+  const hint = [];
+  if (predictions.some(p => /pot|jar|ceramic|vase/.test(p.className)))
+    hint.push("This might belong to Pottery or Ceramic Culture — check Mesopotamian, Greek, or Roman origins.");
+  if (predictions.some(p => /metal|sword|helmet|tool|shield/.test(p.className)))
+    hint.push("Potential metallic artifact — Compare metallurgy with Bronze or Iron Age artifacts.");
+  if (predictions.some(p => /statue|stone|relic|bust/.test(p.className)))
+    hint.push("Consider Hellenistic or Egyptian sculpture typologies for reference.");
+  if (!hint.length) hint.push("General artifact: use shape and material density for period classification.");
+
+  return result.concat("<br><br>AI Archaeologist Insight:<br>" + hint.join("<br>"));
+}
+
+function showRecommendations(name, recs) {
+  document.getElementById('recommendations').innerHTML =
+    `<b>📜 File:</b> ${name}<br><br>${recs.join("<br>")}`;
 }
 </script>
 </body>
