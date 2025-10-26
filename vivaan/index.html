@@ -1,142 +1,879 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArchDiscovery.com - Archaeological Facts</title>
+
+    <title>GLB 3D Importer</title>
+
+    <!-- Load Tailwind CSS for aesthetic styling -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'slate-dark': '#1a202c',
-                        'indigo-bright': '#6366f1',
-                    }
-                }
-            }
-        }
-    </script>
-    
+
     <style>
+
+        /* Set up the body and viewer to take up the full viewport */
+
         body {
+
+            margin: 0;
+
+            overflow: hidden; /* Prevent scrolling */
+
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Slate dark background */
-            color: #e2e8f0; /* Light text */
+
+            background-color: #0d1117; /* Dark background for a premium feel */
+
         }
-        .fact-card {
-            /* Optimized background for a premium, non-flat look */
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            background: linear-gradient(145deg, #2d3748, #1a202c);
+
+        #viewer-container {
+
+            width: 100vw;
+
+            height: 100vh;
+
+            position: relative;
+
         }
-        .fact-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6); /* Slightly stronger shadow on hover */
+
+        /* Style the message box */
+
+        #message-box {
+
+            position: absolute;
+
+            top: 50%;
+
+            left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            padding: 1.5rem 2.5rem;
+
+            background-color: rgba(30, 41, 59, 0.95);
+
+            color: #ffffff;
+
+            border-radius: 12px;
+
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+
+            z-index: 10;
+
+            min-width: 300px;
+
+            text-align: center;
+
+            backdrop-filter: blur(5px);
+
         }
-        .container {
-            max-width: 1200px;
+
+        /* Ensure the canvas covers the container */
+
+        canvas {
+
+            display: block;
+
         }
+
     </style>
+
+    <!-- Load Three.js core -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Load GLTFLoader for handling .glb and .gltf files -->
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Load OrbitControls for camera interaction (rotate, pan, zoom) -->
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
 </head>
+
 <body>
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center py-12 border-b border-indigo-500/50 mb-12">
-            <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight tracking-tighter">
-                ARCH<span class="text-indigo-400">DISCOVERY</span>
-            </h1>
-            <p class="mt-4 text-xl text-slate-400">
-                Unearthing the Past: The Latest Archaeological Updates
-            </p>
-        </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div id="viewer-container">
 
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-yellow-400">🔍</span>
-                    <h2 class="text-2xl font-bold text-white">The Ground Scanner</h2>
-                </div>
-                <p class="text-slate-300">
-                    Modern archaeology heavily utilizes <b class="text-yellow-200">Ground Penetrating Radar (GPR)</b> and magnetometers. These tools allow archaeologists to map buried structures, tombs, and artifacts without disturbing the ground, effectively creating a 3D X-ray of the soil.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">Technology & Methodology</p>
-            </div>
+        <!-- The canvas will be appended here -->
 
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-green-400">💾</span>
-                    <h2 class="text-2xl font-bold text-white">Digital Twin Creation</h2>
-                </div>
-                <p class="text-slate-300">
-                    Artifacts are increasingly being captured using <b class="text-green-200">Photogrammetry and Laser Scanning</b>. This creates highly accurate, millimeter-precision 3D models (like .GLB files!) for virtual preservation, analysis, and global study, protecting them from physical decay.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">3D Archival & Research</p>
-            </div>
+    </div>
 
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-red-400">⏳</span>
-                    <h2 class="text-2xl font-bold text-white">New Age of Dating</h2>
-                </div>
-                <p class="text-slate-300">
-                    Beyond Carbon-14, techniques like <b class="text-red-200">Optically Stimulated Luminescence (OSL)</b> are used to date sedimentary deposits. This has pushed back the known dates of several hominid settlements, revolutionizing our timeline of human migration.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">Chronology & Analysis</p>
-            </div>
+
+
+    <!-- Controls Panel: Floating at the bottom center -->
+
+    <div id="controls-panel" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 p-3 rounded-xl shadow-2xl flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 z-20 border border-indigo-500/50">
+
+        <label for="file-input" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-md active:scale-95">
+
+            Load New .GLB File
+
+        </label>
+
+        <input type="file" id="file-input" accept=".glb, .gltf" class="hidden">
+
+        <p class="text-xs text-slate-300 hidden sm:block">
+
+            Controls: Click/Drag to **Rotate**, Scroll to **Zoom**
+
+        </p>
+
+    </div>
+
+
+
+    <!-- Message box for loading status and instructions -->
+
+    <div id="message-box" class="flex flex-col items-center">
+
+        <div id="loading-spinner" class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400 mb-4 hidden"></div>
+
+        <div id="message-content" class="text-xl font-bold">Please load a .GLB or .GLTF file.</div>
+
+    </div>
+
+
+
+    <script>
+
+        // Global variables for the three.js scene
+
+        let scene, camera, renderer, controls, model, container;
+
+        const messageBox = document.getElementById('message-box');
+
+        const messageContent = document.getElementById('message-content');
+
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        const fileInput = document.getElementById('file-input');
+
+        
+
+        // This is used to track if the animation loop has started
+
+        let isAnimating = false;
+
+
+
+        /**
+
+         * Initializes the Three.js scene, camera, renderer, and lighting.
+
+         */
+
+        function initScene() {
+
+            container = document.getElementById('viewer-container');
+
+
+
+            // Scene setup
+
+            scene = new THREE.Scene();
+
+            scene.background = new THREE.Color(0x1a202c); 
+
+
+
+            // Camera setup
+
+            camera = new THREE.PerspectiveCamera(
+
+                50, 
+
+                window.innerWidth / window.innerHeight, 
+
+                0.1, 
+
+                1000 
+
+            );
+
+            camera.position.set(0, 0, 5); 
+
+
+
+            // Renderer setup
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            renderer.outputEncoding = THREE.sRGBEncoding;
+
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+            renderer.toneMappingExposure = 1.0;
+
+            container.appendChild(renderer.domElement);
+
             
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-blue-400">🧬</span>
-                    <h2 class="text-2xl font-bold text-white">aDNA Insights</h2>
-                </div>
-                <p class="text-slate-300">
-                    The study of <b class="text-blue-200">ancient DNA (aDNA)</b> extracted from skeletal remains is unlocking migration routes, population intermixing, and the evolution of diseases, providing biological data to complement material culture finds.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">Bioarchaeology</p>
-            </div>
 
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-teal-400">🌊</span>
-                    <h2 class="text-2xl font-bold text-white">Maritime Discoveries</h2>
-                </div>
-                <p class="text-slate-300">
-                    Advanced remotely operated vehicles (ROVs) and autonomous underwater vehicles (AUVs) are making deep-sea shipwrecks and <b class="text-teal-200">submerged coastal settlements</b> more accessible than ever, revealing vast, untapped archaeological landscapes.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">Underwater Archaeology</p>
-            </div>
+            // Controls setup (OrbitControls allows user to interact with the camera)
 
-            <div class="fact-card p-6 rounded-xl shadow-xl border border-slate-700">
-                <div class="flex items-center space-x-4 mb-4">
-                    <span class="text-4xl text-pink-400">🤝</span>
-                    <h2 class="text-2xl font-bold text-white">Public Involvement</h2>
-                </div>
-                <p class="text-slate-300">
-                    Citizen Science initiatives are a major trend, where the public helps classify aerial or <b class="text-pink-200">LIDAR data</b>, leading to the identification of new, previously unknown sites from amateur enthusiasts contributing to professional research.
-                </p>
-                <p class="mt-3 text-sm text-indigo-400">Community & Outreach</p>
-            </div>
-        </main>
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-        <footer class="text-center mt-12 pt-8 border-t border-indigo-500/20">
-            <p class="text-slate-500 text-sm">&copy; 20
+            controls.enableDamping = true; // Smooth inertia for rotation
+
+            controls.dampingFactor = 0.05;
+
+            controls.screenSpacePanning = true; // Allow panning
 
 
 
+            // Lighting setup
+
+            // 1. Hemisphere light (soft ambient light)
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+
+            hemiLight.position.set(0, 20, 0);
+
+            scene.add(hemiLight);
+
+
+
+            // 2. Directional light (for shadows and highlights)
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+
+            dirLight.position.set(5, 5, 5);
+
+            scene.add(dirLight);
+
+
+
+            // Handle window resizing
+
+            window.addEventListener('resize', onWindowResize, false);
+
+        }
+
+
+
+        /**
+
+         * Clears the previous model from the scene, if one exists, to prevent memory leaks.
+
+         */
+
+        function clearScene() {
+
+            if (model) {
+
+                scene.remove(model);
+
+                // Dispose of geometries and materials to free GPU memory
+
+                model.traverse(function(object) {
+
+                    if (object.isMesh) {
+
+                        if (object.geometry) object.geometry.dispose();
+
+                        if (object.material) {
+
+                            const materials = Array.isArray(object.material) ? object.material : [object.material];
+
+                            materials.forEach(m => {
+
+                                // Dispose of texture maps if they exist
+
+                                for (const key in m) {
+
+                                    if (m[key] && m[key].isTexture) {
+
+                                        m[key].dispose();
+
+                                    }
+
+                                }
+
+                                m.dispose();
+
+                            });
+
+                        }
+
+                    }
+
+                });
+
+                model = null;
+
+            }
+
+        }
+
+
+
+        /**
+
+         * Loads the GLB/GLTF file content from an ArrayBuffer using GLTFLoader.parse.
+
+         */
+
+        function loadModelFromBuffer(buffer) {
+
+            clearScene(); // Clear previous model
+
+            messageBox.classList.remove('hidden');
+
+            loadingSpinner.classList.remove('hidden');
+
+            messageContent.textContent = 'Parsing 3D Model...';
+
+            
+
+            const loader = new THREE.GLTFLoader();
+
+
+
+            loader.parse(
+
+                buffer,
+
+                '', // Base path is empty since we are loading from memory
+
+                // On Load Success
+
+                function (gltf) {
+
+                    model = gltf.scene;
+
+                    scene.add(model);
+
+                    console.log('Model loaded successfully.', model);
+
+
+
+                    // --- Auto-center and Re-frame Logic ---
+
+                    const box = new THREE.Box3().setFromObject(model);
+
+                    const size = box.getSize(new THREE.Vector3());
+
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    
+
+                    // Reposition the model so its center is at the scene origin (0,0,0)
+
+                    model.position.sub(center); 
+
+                    controls.target.set(0, 0, 0); // Set controls target to the new center
+
+
+
+                    // Adjust camera distance based on model size for proper framing
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+
+                    const fov = camera.fov * (Math.PI / 180);
+
+                    let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+
+                    cameraDistance *= 1.5; // Add some padding
+
+
+
+                    // Reset camera position for a clean start
+
+                    camera.position.set(cameraDistance, cameraDistance, cameraDistance);
+
+                    camera.lookAt(model.position);
+
+                    controls.update(); 
+
+                    
+
+                    // Hide loading message
+
+                    messageBox.classList.add('hidden');
+
+                    
+
+                    // Start animation loop only once
+
+                    if (!isAnimating) { 
+
+                       animate(); 
+
+                       isAnimating = true;
+
+                    }
+
+                },
+
+                // On Error
+
+                function (error) {
+
+                    console.error('An error occurred parsing the model:', error);
+
+                    messageContent.textContent = 'Error parsing model. Please check the file format.';
+
+                    loadingSpinner.classList.add('hidden');
+
+                    messageBox.classList.remove('hidden');
+
+                }
+
+            );
+
+        }
+
+
+
+        /**
+
+         * Handles the file input change event, reading the file into memory.
+
+         */
+
+        function handleFileSelect(event) {
+
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+
+
+            messageBox.classList.remove('hidden');
+
+            loadingSpinner.classList.remove('hidden');
+
+            messageContent.textContent = `Reading ${file.name}...`;
+
+
+
+            const reader = new FileReader();
+
+
+
+            reader.onload = function(e) {
+
+                // FileReader result is the ArrayBuffer needed by GLTFLoader.parse
+
+                loadModelFromBuffer(e.target.result);
+
+            };
+
+
+
+            reader.onerror = function(e) {
+
+                console.error("FileReader failed:", e);
+
+                messageContent.textContent = 'Failed to read file.';
+
+                loadingSpinner.classList.add('hidden');
+
+            };
+
+
+
+            // Read the file as an ArrayBuffer
+
+            reader.readAsArrayBuffer(file);
+
+        }
 
 
 
 
 
+        /**
+
+         * The main animation loop.
+
+         */
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            controls.update(); // Update controls for smooth damping effect
+
+            renderer.render(scene, camera);
+
+        }
+
+
+
+        /**
+
+         * Handles resizing the canvas when the window size changes.
+
+         */
+
+        function onWindowResize() {
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+        }
+
+
+
+        // --- Execution ---
+
+        window.onload = function() {
+
+            // Initialize the scene
+
+            initScene();
+
+
+
+            // Set up event listener for the file input
+
+            fileInput.addEventListener('change', handleFileSelect, false);
+
+        };
+
+
+
+    </script>
+
+</body>
+
+</html>
 
 
 
 
 
+That's a well-structured and functional Three.js GLB/GLTF viewer! It correctly handles scene initialization, lighting, user controls, file loading via FileReader and GLTFLoader.parse, model centering, and resource disposal.
+
+Here is a suggestion for a minor but important aesthetic and functional improvement: Adding an Environment Map (or Skybox).
+
+Loading a basic environment map dramatically improves the visual quality of the imported 3D models, especially those using PBR (Physically Based Rendering) materials (like THREE.MeshStandardMaterial, which is standard for GLTF/GLB). Without one, metallic and glossy surfaces look flat and unrealistic because they have nothing to reflect.
+
+This change involves adding a dependency for the RGBELoader and updating the initScene and loadModelFromBuffer functions.
+
+Suggested Improvement: Add an Environment Map
+
+I'll use a widely available, simple, low-resolution HDR (High Dynamic Range) texture from the Three.js examples folder for a quick and effective implementation. This will provide realistic reflections and global illumination.
+
+Code Changes
+
+Here is the updated and complete <head> and <script> section incorporating the environment map.
+
+HTML
+
+<head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script></head><body>
+
+<script>
+
+// Global variables for the three.js scene
+
+let scene, camera, renderer, controls, model, container;
+
+// ... existing variable declarations ...
+
+let isAnimating = false;
 
 
 
-    
+/**
+
+* Initializes the Three.js scene, camera, renderer, and lighting.
+
+*/
+
+function initScene() {
+
+container = document.getElementById('viewer-container');
 
 
+
+// Scene setup
+
+scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x1a202c);
+
+
+
+// Camera setup
+
+// ... (camera setup remains the same) ...
+
+camera = new THREE.PerspectiveCamera(
+
+50,
+
+window.innerWidth / window.innerHeight,
+
+0.1,
+
+1000
+
+);
+
+camera.position.set(0, 0, 5);
+
+
+
+// Renderer setup
+
+renderer = new THREE.WebGLRenderer({ antialias: true });
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+renderer.setPixelRatio(window.devicePixelRatio);
+
+// Updated: Use Three.sRGBEncoding for output. Tone mapping is good.
+
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure = 1.0;
+
+container.appendChild(renderer.domElement);
+
+
+// Controls setup
+
+// ... (controls setup remains the same) ...
+
+controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+controls.enableDamping = true;
+
+controls.dampingFactor = 0.05;
+
+controls.screenSpacePanning = true;
+
+
+
+// Lighting setup: We can remove the existing lights as the PBR
+
+// material will use the environment map for ambient lighting/reflections.
+
+// For a PBR-focused viewer, the environment map is sufficient.
+
+
+// --- NEW: Load Environment Map (HDR) ---
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+
+pmremGenerator.compileEquirectangularShader();
+
+
+
+new THREE.RGBELoader()
+
+.setDataType(THREE.HalfFloatType) // Necessary for HDR
+
+.load(
+
+'https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr', // A good general-purpose HDR map
+
+function (texture) {
+
+const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+
+
+// Set as scene background and environment map
+
+scene.environment = envMap;
+
+// Optional: scene.background = envMap; // Uncomment for a skybox background
+
+
+
+texture.dispose();
+
+pmremGenerator.dispose();
+
+
+console.log('Environment map loaded and applied.');
+
+},
+
+undefined, // Progress function (optional)
+
+function(error) { // Error function
+
+console.error('An error occurred loading the HDR environment map:', error);
+
+}
+
+);
+
+// ----------------------------------------
+
+
+
+// Handle window resizing
+
+window.addEventListener('resize', onWindowResize, false);
+
+}
+
+
+
+/**
+
+* Clears the previous model from the scene... (remains the same)
+
+*/
+
+function clearScene() {
+
+// ... (rest of clearScene remains the same) ...
+
+}
+
+
+
+/**
+
+* Loads the GLB/GLTF file content from an ArrayBuffer... (remains the same)
+
+*/
+
+function loadModelFromBuffer(buffer) {
+
+clearScene(); // Clear previous model
+
+messageBox.classList.remove('hidden');
+
+loadingSpinner.classList.remove('hidden');
+
+messageContent.textContent = 'Parsing 3D Model...';
+
+
+const loader = new THREE.GLTFLoader();
+
+
+
+loader.parse(
+
+buffer,
+
+'',
+
+function (gltf) {
+
+model = gltf.scene;
+
+
+// NEW: Ensure materials are set to use the environment map
+
+model.traverse(function(object) {
+
+if (object.isMesh) {
+
+// Cast and receive shadows (optional, but good practice)
+
+object.castShadow = true;
+
+object.receiveShadow = true;
+
+}
+
+});
+
+
+
+scene.add(model);
+
+console.log('Model loaded successfully.', model);
+
+
+
+// --- Auto-center and Re-frame Logic --- (remains the same)
+
+// ... (rest of auto-centering logic remains the same) ...
+
+
+const box = new THREE.Box3().setFromObject(model);
+
+const size = box.getSize(new THREE.Vector3());
+
+const center = box.getCenter(new THREE.Vector3());
+
+
+model.position.sub(center);
+
+controls.target.set(0, 0, 0);
+
+
+
+const maxDim = Math.max(size.x, size.y, size.z);
+
+const fov = camera.fov * (Math.PI / 180);
+
+let cameraDistance = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+
+cameraDistance *= 1.5;
+
+
+
+camera.position.set(cameraDistance, cameraDistance, cameraDistance);
+
+camera.lookAt(model.position);
+
+controls.update();
+
+
+// Hide loading message
+
+messageBox.classList.add('hidden');
+
+
+// Start animation loop only once
+
+if (!isAnimating) {
+
+animate();
+
+isAnimating = true;
+
+}
+
+},
+
+// On Error
+
+function (error) {
+
+// ... (error handling remains the same) ...
+
+}
+
+);
+
+}
+
+
+
+// ... (handleFileSelect, animate, onWindowResize, and execution logic remain the same) ...
+
+</script></body></html>
