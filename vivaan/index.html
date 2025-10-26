@@ -74,6 +74,10 @@
         const messageContent = document.getElementById('message-content');
         const loadingSpinner = document.getElementById('loading-spinner');
         let isAnimating = false;
+        
+        // Define the name of the uploaded GLB file
+        const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
+
 
         /**
          * Initializes the Three.js scene, camera, renderer, and lighting/environment.
@@ -192,15 +196,14 @@
         }
 
         /**
-         * SIMULATES loading the uploaded file from the server.
-         * In a real application, this would be an AJAX or Fetch call.
+         * Loads the uploaded GLB file using the Fetch API.
+         * IMPORTANT: This assumes 'artifact3-fractured_16_4pcs (2).glb' is in the same folder as this HTML file.
          */
         async function loadArtifactFromFile() {
-            messageContent.textContent = 'Fetching artifact3-fractured_16_4pcs (2).glb...';
+            messageContent.textContent = `Fetching ${ARTIFACT_FILE}...`;
             try {
-                // Fetch the uploaded GLB file content via its unique ID
-                const fetchId = "uploaded:artifact3-fractured_16_4pcs (2).glb";
-                const fileResponse = await fetch(`data/${fetchId}`);
+                // CORRECTED: Fetch the file directly by name
+                const fileResponse = await fetch(ARTIFACT_FILE);
                 
                 if (!fileResponse.ok) {
                     throw new Error(`HTTP error! status: ${fileResponse.status}`);
@@ -214,7 +217,7 @@
 
             } catch (error) {
                 console.error("Failed to load artifact file:", error);
-                messageContent.textContent = 'Error: Could not retrieve artifact file.';
+                messageContent.textContent = `Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`;
                 loadingSpinner.classList.add('hidden');
             }
         }
