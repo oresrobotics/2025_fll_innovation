@@ -1,4 +1,4 @@
-     <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1522,7 +1522,8 @@
 
         function processLoadedModel(model, gltf) {
             currentModel = model;
-            scene.add(model);
+            // Don't add the entire model to the scene
+            // scene.add(model);
             frameObject(model);
             
             model.traverse((child) => {
@@ -1590,7 +1591,8 @@
 
         function clearCurrentModel() {
             if (currentModel) {
-                scene.remove(currentModel);
+                // Don't remove from scene since we never added it
+                // scene.remove(currentModel);
                 currentModel.traverse(obj => {
                     if (obj.isMesh) {
                         obj.geometry.dispose();
