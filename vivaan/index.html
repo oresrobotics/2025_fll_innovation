@@ -1,79 +1,151 @@
-const messageContent = document.getElementById('message-content');
-const loadingSpinner = document.getElementById('loading-spinner');
-let isAnimating = false;
+Here’s a full HTML + JS scaffold for Arch World, incorporating all the features and team contributions you listed. This is a demo-ready version with placeholder logic and comments for future expansion.
 
-// Define the name of the uploaded GLB file
-const ARTIFACT_FILE = "artifact3-fractured_16_4pcs (2).glb";
+🏺 arch-world.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arch World</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #menu { width: 250px; background: #f4f4f4; padding: 10px; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
+    #menu h2 { cursor: pointer; }
+    #viewer { margin-left: 260px; height: 100vh; background: #ddd; position: relative; }
+    #infoBox, #faqPanel, #galleryPanel { position: absolute; top: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; display: none; }
+    #milestones { margin-top: 20px; }
+    canvas { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h2 onclick="toggleSection('faqPanel')">FAQ Panel (Vivaan)</h2>
+    <h2 onclick="toggleSection('galleryPanel')">Gallery (Preloaded)</h2>
+    <h2 onclick="connectWithArchaeologist()">Connect with Archaeologist</h2>
+    <div id="milestones">
+      <h3>Milestones</h3>
+      <ul>
+        <li>Initial Demo for Archaeologist</li>
+        <li>Incorporate Archaeologist Feedback</li>
+        <li>Presentation for Competition</li>
+        <li>Future Ideas</li>
+      </ul>
+    </div>
+  </div>
 
-/**
- * Initializes the Three.js scene, camera, renderer, and lighting/environment.
- * (Implementation not shown here)
- */
-function initializeScene() {
-    // Your Three.js setup logic goes here
-}
+  <div id="viewer">
+    <canvas id="glCanvas"></canvas>
+    <div id="infoBox"></div>
+    <div id="faqPanel">
+      <h3>Artifact Info</h3>
+      <p><strong>Date Found:</strong> 2023-04-12</p>
+      <p><strong>Location:</strong> Petra, Jordan</p>
+      <p><strong>Comments:</strong> Fragmented but well-preserved.</p>
+    </div>
+    <div id="galleryPanel">
+      <h3>Submitted Models</h3>
+      <ul>
+        <li>pottery.glb</li>
+        <li>temple.glb</li>
+        <li>mask.glb</li>
+      </ul>
+    </div>
+  </div>
 
-/**
- * Displays a loading message and shows the spinner.
- * @param {string} text - Message to display
- */
-function showLoading(text) {
-    messageContent.textContent = text;
-    loadingSpinner.classList.remove('hidden');
-}
+  <script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three';
+    import { GLTFLoader } from 'https://cdn.skypack.dev/three/examples/jsm/loaders/GLTFLoader.js';
 
-/**
- * Hides the loading spinner and optionally updates the message.
- * @param {string} [text] - Optional message to display
- */
-function hideLoading(text) {
-    if (text) messageContent.textContent = text;
-    loadingSpinner.classList.add('hidden');
-}
+    const canvas = document.getElementById('glCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(window.innerWidth - 260, window.innerHeight);
 
-/**
- * Fetches the GLB file and returns its ArrayBuffer.
- * @returns {Promise<ArrayBuffer>}
- */
-async function fetchGLBFile() {
-    showLoading(`Fetching ${ARTIFACT_FILE}...`);
-    try {
-        const response = await fetch(ARTIFACT_FILE);
-        if (!response.ok) {
-throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 260) / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
-        const buffer = await response.arrayBuffer();
-        const fileSizeKB = (buffer.byteLength / 1024).toFixed(2);
-        console.log(`Successfully loaded ${ARTIFACT_FILE} (${fileSizeKB} KB)`);
-        hideLoading(`Loaded ${ARTIFACT_FILE} (${fileSizeKB} KB)`);
+    const loader = new GLTFLoader();
+    const pieces = [];
 
-        return buffer;
-    } catch (error) {
-        console.error("Failed to load artifact file:", error);
-        hideLoading(`Error: Could not find or retrieve ${ARTIFACT_FILE}. Make sure it is in the same folder.`);
-        throw error;
+    const glbFiles = ['pottery.glb', 'temple.glb', 'mask.glb']; // Alex: Load multiple GLBs
+    glbFiles.forEach((fileName, index) => {
+      loader.load(fileName, (gltf) => {
+        const model = gltf.scene;
+        model.name = fileName; // Noah: Associate file name
+        model.position.x = index * 2;
+        scene.add(model);
+        pieces.push(model);
+      });
+    });
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    canvas.addEventListener('click', (event) => {
+      mouse.x = (event.clientX / canvas.clientWidth) * 2 - 1;
+      mouse.y = -(event.clientY / canvas.clientHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(pieces, true);
+      if (intersects.length > 0) {
+        const selected = intersects[0].object;
+        showInfo(selected);
+      }
+    });
+
+    canvas.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      mouse.x = (event.clientX / canvas.clientWidth) * 2 - 1;
+      mouse.y = -(event.clientY / canvas.clientHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(pieces, true);
+      if (intersects.length > 0) {
+        const selected = intersects[0].object;
+        alert(`Right-click menu for ${selected.name} (Kai)`);
+      }
+    });
+
+    function showInfo(piece) {
+      const infoBox = document.getElementById('infoBox');
+      infoBox.innerHTML = `<strong>Selected:</strong> ${piece.name}<br><em>Click to flag for review</em>`;
+      infoBox.style.display = 'block';
+      infoBox.onclick = () => {
+        alert(`Flagged ${piece.name} for archaeologist review`);
+      };
     }
-}
 
-/**
- * Loads the artifact and initializes the viewer.
- */
-async function loadArtifactFromFile() {
-    try {
-        const glbData = await fetchGLBFile();
-
-        // Placeholder: Use Three.js GLTFLoader to parse and display the model
-        // const loader = new THREE.GLTFLoader();
-        // const glbBlob = new Blob([glbData], { type: 'model/gltf-binary' });
-        // const glbUrl = URL.createObjectURL(glbBlob);
-        // loader.load(glbUrl, function (gltf) {
-        //     scene.add(gltf.scene);
-        // });
-console.log("Artifact loaded and ready for rendering.");
-    } catch (error) {
-        // Error already handled in fetchGLBFile
+    function toggleSection(id) {
+      const el = document.getElementById(id);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
-}
+
+    function connectWithArchaeologist() {
+      alert("Connected with archaeologist. Flagged for review.");
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Charlie: Save progress (placeholder)
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('archWorldProgress', JSON.stringify(pieces.map(p => p.name)));
+    });
+
+    // Arsh: Bug - boundaries not moving (placeholder)
+    // Future fix: update bounding boxes on transform
+
+    // Charlie: Task - break pot and 3D scan (placeholder)
+    console.log("Task: Break an old flower pot and 3D scan it");
+
+    // Task: Find real 3D scans online (placeholder)
+    console.log("Task: Find real 3D scans of actual artifacts");
+
+    // Support rooms/scenes/dig sites (future expansion)
+  </script>
+</body>
+</html>
+
 
 
