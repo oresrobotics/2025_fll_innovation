@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GLB Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background-color: #ffffff;
+    }
+    #upload { display: none; }
+    #homeIconBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #homeIconBtn:hover { background: #333; }
+    #loadBtn {
+      position: absolute;
+      top: 10px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #loadBtn:hover { background: #333; }
+    #assembleBtn {
+      position: absolute;
+      top: 50px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #assembleBtn:hover { background: #333; }
+    #assembleBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #scrambleBtn {
+      position: absolute;
+      top: 330px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #scrambleBtn:hover { background: #333; }
+    #scrambleBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #scrambleControls {
+      position: absolute;
+      top: 370px;
+      left: 56px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 160px;
+    }
+    #scrambleControls.hidden {
+      display: none;
+    }
+    #scrambleControls label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    #scrambleControls input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #scrambleControls .value-display {
+      color: #4a90e2;
+      font-size: 12px;
+      text-align: right;
+    }
+    #stopScrambleBtn {
+      padding: 6px 10px;
+      background: #d9534f;
+      color: #fff;
+      border: 1px solid #c9302c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    #stopScrambleBtn:hover {
+      background: #c9302c;
+    }
+    #lightingControls {
+      position: absolute;
+      top: 90px;
+      left: 56px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    #downloadBtn {
+      position: absolute;
+      top: 170px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #downloadBtn:hover { background: #333; }
+    #downloadBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #gridBtn {
+      position: absolute;
+      top: 210px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #gridBtn:hover { background: #333; }
+    #gridBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #gravityBtn {
+      position: absolute;
+      top: 250px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #gravityBtn:hover { background: #333; }
+    #gravityBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #gravityBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #explodeBtn {
+      position: absolute;
+      top: 290px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #explodeBtn:hover { background: #333; }
+    #explodeBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #gridControls {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 160px;
+    }
+    #gridControls.hidden {
+      display: none;
+    }
+    #gridControls label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    #gridControls input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #gridControls .value-display {
+      color: #4a90e2;
+      font-size: 12px;
+      text-align: right;
+    }
+    #sliceModeBtn {
+      position: absolute;
+      top: 56px;
+      right: 10px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #sliceModeBtn:hover { background: #333; }
+    #sliceModeBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #wireframeBtn {
+      position: absolute;
+      top: 96px;
+      right: 10px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #wireframeBtn:hover { background: #333; }
+    #wireframeBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #slicingControls {
+      position: absolute;
+      top: 176px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(43, 43, 43, 0.95);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      width: 180px;
+    }
+    #slicingControls.hidden {
+      display: none;
+    }
+    .sliceBtn {
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .sliceBtn:hover { background: #333; }
+    .sliceControl {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .sliceControl label {
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .sliceControl input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+    #zoomControls {
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .lightBtn:hover { background: #333; }
+    .lightBtn.active {
+      background: #4a90e2;
+      border-color: #4a90e2;
+    }
+    #homeScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #homeScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .homeContent {
+      text-align: center;
+      color: white;
+      max-width: 600px;
+      padding: 40px;
+    }
+    .homeContent h1 {
+      font-size: 48px;
+      margin: 0 0 16px 0;
+      font-weight: 300;
+      letter-spacing: 2px;
+    }
+    .homeContent p {
+      font-size: 18px;
+      margin: 0 0 16px 0;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    .homeContent .subtitle {
+      font-size: 16px;
+      margin: 0 0 40px 0;
+      opacity: 0.85;
+      font-style: italic;
+      line-height: 1.5;
+    }
+    .homeButtons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .homeBtn {
+      padding: 14px 32px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .homeBtn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.8);
+      transform: translateY(-2px);
+    }
+    .homeBtn.primary {
+      background: white;
+      color: #667eea;
+      border-color: white;
+    }
+    .homeBtn.primary:hover {
+      background: #f0f0f0;
+      transform: translateY(-2px);
+    }
+    .features {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .feature {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      backdrop-filter: blur(5px);
+    }
+    #authScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #authScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .authContainer {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .authContainer h2 {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 28px;
+      font-weight: 300;
+    }
+    .authContainer .authSubtitle {
+      color: #666;
+      margin: 0 0 32px 0;
+      font-size: 14px;
+    }
+    .authForm {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .authForm.hidden {
+      display: none;
+    }
+    .formGroup {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .formGroup label {
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .formGroup input {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: sans-serif;
+      transition: border-color 0.3s;
+    }
+    .formGroup input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .authBtn {
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 8px;
+    }
+    .authBtn:hover {
+      background: #5568d3;
+    }
+    .authToggle {
+      text-align: center;
+      margin-top: 24px;
+      color: #666;
+      font-size: 14px;
+    }
+    .authToggle a {
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .authToggle a:hover {
+      text-decoration: underline;
+    }
+    .guestBtn {
+      margin-top: 16px;
+      padding: 12px;
+      background: transparent;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .guestBtn:hover {
+      background: #667eea;
+      color: white;
+    }
+    #signOutBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    #signOutBtn:hover { 
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
+    #zoomControls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      gap: 5px;
+    }
+    .zoomBtn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .zoomBtn:hover { background: #333; }
+    .zoomBtn:active { background: #444; }
+  </style>
+</head>
+<body>
+  <div id="authScreen">
+    <div class="authContainer">
+      <!-- Sign In Form -->
+      <div id="signInForm" class="authForm">
+        <h2>Welcome Back</h2>
+        <p class="authSubtitle">Sign in to continue your artifact exploration</p>
+        <div class="formGroup">
+          <label for="signInEmail">Email</label>
+          <input type="email" id="signInEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="formGroup">
+          <label for="signInPassword">Password</label>
+          <input type="password" id="signInPassword" placeholder="Enter your password" required>
+        </div>
+        <button class="authBtn" id="signInBtn">Sign In</button>
+        <button class="guestBtn" id="continueAsGuest1">Continue as Guest</button>
+        <div class="authToggle">
+          Don't have an account? <a id="showSignUp">Sign up</a>
+        </div>
+      </div>
+      
+      <!-- Sign Up Form -->
+      <div id="signUpForm" class="authForm hidden">
+        <h2>Create Account</h2>
+        <p class="authSubtitle">Join us in reconstructing history</p>
+        <div class="formGroup">
+          <label for="signUpName">Full Name</label>
+          <input type="text" id="signUpName" placeholder="John Doe" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpEmail">Email</label>
+          <input type="email" id="signUpEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpPassword">Password</label>
+          <input type="password" id="signUpPassword" placeholder="Create a password" required>
+        </div>
+        <div class="formGroup">
+          <label for="signUpPasswordConfirm">Confirm Password</label>
+          <input type="password" id="signUpPasswordConfirm" placeholder="Confirm your password" required>
+        </div>
+        <button class="authBtn" id="signUpBtn">Sign Up</button>
+        <button class="guestBtn" id="continueAsGuest2">Continue as Guest</button>
+        <div class="authToggle">
+          Already have an account? <a id="showSignIn">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="homeScreen" class="hidden">
+    <button id="signOutBtn">Sign Out</button>
+    <div class="homeContent">
+      <h1>Archaeological Artifact Viewer</h1>
+      <p>View, rotate, and reassemble 3D archaeological artifacts. Load your GLB model to explore fragments with interactive controls.</p>
+      <p class="subtitle">Help archaeologists assemble artifacts! Who knows... you could put together the Holy Grail!</p>
+      <div class="homeButtons">
+        <button class="homeBtn primary" id="homeLoadBtn">Load 3D Model</button>
+        <button class="homeBtn" id="homeDragBtn">Drag & Drop File</button>
+      </div>
+      <div class="features">
+        <div class="feature">🔄 Rotate & Pan</div>
+        <div class="feature">🔍 Zoom Controls</div>
+        <div class="feature">🧩 Auto-Assemble</div>
+        <div class="feature">💡 Lighting Controls</div>
+        <div class="feature">✋ Drag Fragments</div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="upload" accept=".glb,.gltf" multiple />
+  <button id="homeIconBtn" title="Home">🏠</button>
+  <button id="loadBtn">Load model…</button>
+  <button id="assembleBtn" disabled>Auto-assemble</button>
+  <div id="lightingControls">
+    <button class="lightBtn" id="fullBrightBtn">Full Brightness</button>
+    <button class="lightBtn active" id="resetLightBtn">Reset Lighting</button>
+  </div>
+  <button id="downloadBtn" disabled>Download GLB</button>
+  <button id="gridBtn">Show Grid</button>
+  <button id="gravityBtn" disabled>Gravity</button>
+  <button id="explodeBtn" disabled>Explode</button>
+  <div id="gridControls" class="hidden">
+    <label>Grid Height</label>
+    <input type="range" id="gridHeight" min="-5" max="5" step="0.1" value="0">
+    <div class="value-display" id="heightValue">0.0</div>
+  </div>
+  <button id="scrambleBtn" disabled>Start Scramble</button>
+  <div id="scrambleControls" class="hidden">
+    <label>Boundary Limit</label>
+    <input type="range" id="scrambleRadius" min="0.5" max="5" step="0.1" value="2">
+    <div class="value-display" id="radiusValue">2.0x</div>
+    <button id="stopScrambleBtn">Stop Scramble</button>
+  </div>
+  <div id="zoomControls">
+    <button class="zoomBtn" id="zoomIn" title="Zoom In">+</button>
+    <button class="zoomBtn" id="zoomOut" title="Zoom Out">−</button>
+  </div>
+  <button id="sliceModeBtn">Slicing Mode</button>
+  <div id="slicingControls" class="hidden">
+    <div class="sliceControl">
+      <label>Position</label>
+      <input type="range" id="slicePosition" min="-1" max="1" step="0.01" value="0">
+    </div>
+    <div class="sliceControl">
+      <label>Axis</label>
+      <select id="sliceAxis" style="padding: 4px; border-radius: 4px; background: #1a1a1a; color: #fff; border: 1px solid #555;">
+        <option value="x">X-Axis</option>
+        <option value="y" selected>Y-Axis</option>
+        <option value="z">Z-Axis</option>
+      </select>
+    </div>
+    <button class="sliceBtn" id="flipSliceBtn">Flip Direction</button>
+  </div>
+  <button id="wireframeBtn">Show Boundaries</button>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { DragControls } from 'three/addons/controls/DragControls.js';
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 3);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+    renderer.shadowMap.enabled = false; // Disable shadows
+    renderer.localClippingEnabled = true; // Enable clipping
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.minDistance = 0.1;
+    controls.maxDistance = 100;
+
+    // lights - bright and even coverage
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+    
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight1.position.set(5, 10, 7.5);
+    scene.add(dirLight1);
+    
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight2.position.set(-5, 5, -5);
+    scene.add(dirLight2);
+    
+    const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight3.position.set(0, -5, 5);
+    scene.add(dirLight3);
+    
+    // Store default light intensities
+    const defaultLighting = {
+      ambient: 1.5,
+      dir1: 1.0,
+      dir2: 0.8,
+      dir3: 0.5,
+      exposure: 1.3
+    };
+
+    const loader = new GLTFLoader();
+    let currentModel = null;
+    let draggableObjects = [];
+    let dragControls = null;
+    let originalPositions = new Map();
+    let originalRotations = new Map();
+    let clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    let slicingEnabled = false;
+    let wireframeMode = false;
+    let edgesHelpers = [];
+    let gridHelper = null;
+    let gridVisible = false;
+    let gravityEnabled = false;
+    let gravityAnimationId = null;
+    let physicsData = new Map();
+
+    function clearCurrentModel() {
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel.traverse(obj => {
+          if (obj.isMesh) {
+            obj.geometry.dispose();
+            if (obj.material) {
+              const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+              mats.forEach(m => {
+                if (m.map) m.map.dispose();
+                if (m.normalMap) m.normalMap.dispose();
+                if (m.roughnessMap) m.roughnessMap.dispose();
+                if (m.metalnessMap) m.metalnessMap.dispose();
+                if (m.emissiveMap) m.emissiveMap.dispose();
+                m.dispose?.();
+              });
+            }
+          }
+        });
+        currentModel = null;
+      }
+      draggableObjects = [];
+      if (dragControls) {
+        dragControls.dispose();
+        dragControls = null;
+      }
+    }
+
+    function frameObject(object) {
+      const box = new THREE.Box3().setFromObject(object);
+      const size = box.getSize(new THREE.Vector3()).length();
+      const center = box.getCenter(new THREE.Vector3());
+
+      controls.target.copy(center);
+
+      const fitOffset = 1.2;
+      const fov = THREE.MathUtils.degToRad(camera.fov);
+      let distance = size / (2 * Math.tan(fov / 2));
+      distance *= fitOffset;
+
+      const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+      camera.position.copy(controls.target).addScaledVector(dir, distance);
+
+      camera.near = distance / 100;
+      camera.far = distance * 100;
+      camera.updateProjectionMatrix();
+      controls.update();
+    }
+
+    function loadFromURL(url) {
+      loader.load(
+        url,
+        (gltf) => {
+          clearCurrentModel();
+          currentModel = gltf.scene;
+          scene.add(currentModel);
+          frameObject(currentModel);
+          setupDraggableObjects();
+        },
+        undefined,
+        (err) => {
+          console.error('Failed to load model:', err);
+          alert('Failed to load model. See console for details.');
+        }
+      );
+    }
+
+    function setupDraggableObjects() {
+      draggableObjects = [];
+      originalPositions.clear();
+      originalRotations.clear();
+      
+      if (currentModel) {
+        currentModel.traverse(obj => {
+          if (obj.isMesh) {
+            draggableObjects.push(obj);
+            // Store original world positions and rotations
+            const worldPos = new THREE.Vector3();
+            const worldRot = new THREE.Quaternion();
+            obj.getWorldPosition(worldPos);
+            obj.getWorldQuaternion(worldRot);
+            originalPositions.set(obj.uuid, worldPos.clone());
+            originalRotations.set(obj.uuid, worldRot.clone());
+          }
+        });
+      }
+      
+      // Enable assemble, download, scramble, gravity, and explode buttons
+      const assembleBtn = document.getElementById('assembleBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const scrambleBtn = document.getElementById('scrambleBtn');
+      const gravityBtn = document.getElementById('gravityBtn');
+      const explodeBtn = document.getElementById('explodeBtn');
+      if (draggableObjects.length > 1) {
+        assembleBtn.disabled = false;
+        scrambleBtn.disabled = false;
+        explodeBtn.disabled = false;
+      }
+      if (draggableObjects.length > 0) {
+        downloadBtn.disabled = false;
+        gravityBtn.disabled = false;
+      }
+
+      if (dragControls) {
+        dragControls.dispose();
+      }
+
+      if (draggableObjects.length > 0) {
+        dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
+        
+        // Disable orbit controls while dragging
+        dragControls.addEventListener('dragstart', () => {
+          controls.enabled = false;
+        });
+        
+        dragControls.addEventListener('dragend', () => {
+          controls.enabled = true;
+        });
+
+        // Visual feedback
+        dragControls.addEventListener('hoveron', (event) => {
+          event.object.userData.originalMaterial = event.object.material;
+          if (Array.isArray(event.object.material)) {
+            event.object.material = event.object.material.map(mat => {
+              const newMat = mat.clone();
+              newMat.emissive.setHex(0x444444);
+              return newMat;
+            });
+          } else {
+            const newMat = event.object.material.clone();
+            newMat.emissive.setHex(0x444444);
+            event.object.material = newMat;
+          }
+        });
+
+        dragControls.addEventListener('hoveroff', (event) => {
+          if (event.object.userData.originalMaterial) {
+            event.object.material = event.object.userData.originalMaterial;
+            delete event.object.userData.originalMaterial;
+          }
+        });
+      }
+    }
+
+    // Get all screen elements first
+    const authScreen = document.getElementById('authScreen');
+    const homeScreen = document.getElementById('homeScreen');
+    
+    // Auth screen elements
+    const signInForm = document.getElementById('signInForm');
+    const signUpForm = document.getElementById('signUpForm');
+    const showSignUpLink = document.getElementById('showSignUp');
+    const showSignInLink = document.getElementById('showSignIn');
+    const signInBtn = document.getElementById('signInBtn');
+    const signUpBtn = document.getElementById('signUpBtn');
+    const continueAsGuest1 = document.getElementById('continueAsGuest1');
+    const continueAsGuest2 = document.getElementById('continueAsGuest2');
+    
+    function hideAuthScreen() {
+      authScreen.classList.add('hidden');
+      setTimeout(() => {
+        authScreen.style.display = 'none';
+      }, 500);
+    }
+    
+    function showHomeScreen() {
+      hideAuthScreen();
+      setTimeout(() => {
+        homeScreen.style.display = 'flex';
+        homeScreen.classList.remove('hidden');
+      }, 500);
+    }
+    
+    function hideHomeScreen() {
+      homeScreen.classList.add('hidden');
+      setTimeout(() => {
+        homeScreen.style.display = 'none';
+      }, 500);
+    }
+    
+    // Toggle between sign in and sign up
+    showSignUpLink.addEventListener('click', () => {
+      signInForm.classList.add('hidden');
+      signUpForm.classList.remove('hidden');
+    });
+    
+    showSignInLink.addEventListener('click', () => {
+      signUpForm.classList.add('hidden');
+      signInForm.classList.remove('hidden');
+    });
+    
+    // Sign in
+    signInBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signInEmail').value;
+      const password = document.getElementById('signInPassword').value;
+      
+      if (email && password) {
+        console.log('Sign in:', email);
+        // Store user info (frontend only)
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', email.split('@')[0]);
+        showHomeScreen();
+      } else {
+        alert('Please fill in all fields');
+      }
+    });
+    
+    // Sign up
+    signUpBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signUpName').value;
+      const email = document.getElementById('signUpEmail').value;
+      const password = document.getElementById('signUpPassword').value;
+      const passwordConfirm = document.getElementById('signUpPasswordConfirm').value;
+      
+      if (name && email && password && passwordConfirm) {
+        if (password !== passwordConfirm) {
+          alert('Passwords do not match');
+          return;
+        }
+        console.log('Sign up:', name, email);
+        // Store user info (frontend only)
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', name);
+        showHomeScreen();
+      } else {
+        alert('Please fill in all fields');
+      }
+    });
+    
+    // Continue as guest
+    continueAsGuest1.addEventListener('click', () => {
+      localStorage.setItem('userEmail', 'guest');
+      localStorage.setItem('userName', 'Guest');
+      showHomeScreen();
+    });
+    
+    continueAsGuest2.addEventListener('click', () => {
+      localStorage.setItem('userEmail', 'guest');
+      localStorage.setItem('userName', 'Guest');
+      showHomeScreen();
+    });
+    
+    // Check if user is already logged in
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+      // Already logged in, skip auth screen
+      hideAuthScreen();
+      homeScreen.style.display = 'flex';
+      homeScreen.classList.remove('hidden');
+    }
+    
+    // Home screen buttons
+    const homeLoadBtn = document.getElementById('homeLoadBtn');
+    const homeDragBtn = document.getElementById('homeDragBtn');
+    
+    homeLoadBtn.addEventListener('click', () => {
+      upload.click();
+    });
+    
+    homeDragBtn.addEventListener('click', () => {
+      hideHomeScreen();
+    });
+    
+    // Home icon button
+    const homeIconBtn = document.getElementById('homeIconBtn');
+    homeIconBtn.addEventListener('click', () => {
+      homeScreen.style.display = 'flex';
+      homeScreen.classList.remove('hidden');
+    });
+    
+    // Sign out button
+    const signOutBtn = document.getElementById('signOutBtn');
+    signOutBtn.addEventListener('click', () => {
+      // Clear user data
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userName');
+      
+      // Hide all screens
+      homeScreen.classList.add('hidden');
+      homeScreen.style.display = 'none';
+      
+      // Show auth screen and reset to sign in form
+      authScreen.style.display = 'flex';
+      authScreen.classList.remove('hidden');
+      signUpForm.classList.add('hidden');
+      signInForm.classList.remove('hidden');
+      
+      // Clear form fields
+      document.getElementById('signInEmail').value = '';
+      document.getElementById('signInPassword').value = '';
+      document.getElementById('signUpName').value = '';
+      document.getElementById('signUpEmail').value = '';
+      document.getElementById('signUpPassword').value = '';
+      document.getElementById('signUpPasswordConfirm').value = '';
+    });
+    
+    // File input
+    const upload = document.getElementById('upload');
+    const loadBtn = document.getElementById('loadBtn');
+    loadBtn.addEventListener('click', () => upload.click());
+    upload.addEventListener('change', (event) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      
+      // Validate all files
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
+          alert('Please select only .glb or .gltf files.');
+          return;
+        }
+      }
+      
+      hideHomeScreen();
+      
+      // Clear existing model
+      clearCurrentModel();
+      
+      // Create a container for all models
+      currentModel = new THREE.Group();
+      scene.add(currentModel);
+      
+      // Load all files
+      let loadedCount = 0;
+      const totalFiles = files.length;
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const objectURL = URL.createObjectURL(file);
+        
+        loader.load(
+          objectURL,
+          (gltf) => {
+            // Add each model to the group with slight offset to avoid overlap
+            const model = gltf.scene;
+            model.position.x = (i - totalFiles / 2) * 0.5; // Spread them out
+            currentModel.add(model);
+            
+            loadedCount++;
+            console.log(`Loaded ${loadedCount}/${totalFiles}: ${file.name}`);
+            
+            // When all files are loaded
+            if (loadedCount === totalFiles) {
+              frameObject(currentModel);
+              setupDraggableObjects();
+            }
+          },
+          undefined,
+          (err) => {
+            console.error(`Failed to load ${file.name}:`, err);
+            alert(`Failed to load ${file.name}. See console for details.`);
+          }
+        );
+      }
+    });
+
+    // Drag and drop
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      renderer.domElement.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    document.body.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        // Validate all files
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (!file.name.toLowerCase().endsWith('.glb') && !file.name.toLowerCase().endsWith('.gltf')) {
+            alert('Please drop only .glb or .gltf files.');
+            return;
+          }
+        }
+        
+        hideHomeScreen();
+        
+        // Clear existing model
+        clearCurrentModel();
+        
+        // Create a container for all models
+        currentModel = new THREE.Group();
+        scene.add(currentModel);
+        
+        // Load all files
+        let loadedCount = 0;
+        const totalFiles = files.length;
+        
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const objectURL = URL.createObjectURL(file);
+          
+          loader.load(
+            objectURL,
+            (gltf) => {
+              // Add each model to the group with slight offset
+              const model = gltf.scene;
+              model.position.x = (i - totalFiles / 2) * 0.5;
+              currentModel.add(model);
+              
+              loadedCount++;
+              console.log(`Loaded ${loadedCount}/${totalFiles}: ${file.name}`);
+              
+              // When all files are loaded
+              if (loadedCount === totalFiles) {
+                frameObject(currentModel);
+                setupDraggableObjects();
+              }
+            },
+            undefined,
+            (err) => {
+              console.error(`Failed to load ${file.name}:`, err);
+              alert(`Failed to load ${file.name}. See console for details.`);
+            }
+          );
+        }
+      }
+    });
+
+    // URL param ?src=...
+    const params = new URLSearchParams(window.location.search);
+    const src = params.get('src');
+    if (src) {
+      loadFromURL(src);
+    }
+
+    // Auto-assemble function
+    function autoAssemble() {
+      if (draggableObjects.length < 2) {
+        console.log('Need at least 2 objects');
+        return;
+      }
+      
+      console.log('Auto-assemble starting with', draggableObjects.length, 'objects');
+      
+      const assembleBtn = document.getElementById('assembleBtn');
+      assembleBtn.disabled = true;
+      assembleBtn.textContent = 'Assembling...';
+      
+      // Get current state
+      const initialStates = new Map();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        initialStates.set(obj.uuid, worldPos.clone());
+      });
+      
+      // Calculate centroid of all pieces
+      const centroid = new THREE.Vector3();
+      let count = 0;
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        centroid.add(worldPos);
+        count++;
+      });
+      centroid.divideScalar(count);
+      
+      console.log('Centroid:', centroid);
+      
+      // Calculate target positions - move each piece 100% toward centroid
+      const targetPositions = new Map();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        
+        const toCenter = new THREE.Vector3().subVectors(centroid, worldPos);
+        const targetPos = worldPos.clone().add(toCenter.multiplyScalar(1.0));
+        
+        targetPositions.set(obj.uuid, targetPos);
+        console.log('Object', obj.uuid.substring(0, 8), 'from', worldPos, 'to', targetPos);
+      });
+      
+      // Animate assembly
+      const duration = 1500; // 1.5 seconds
+      const startTime = Date.now();
+      
+      function animateAssembly() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function (ease-in-out)
+        const eased = progress < 0.5 
+          ? 2 * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        draggableObjects.forEach(obj => {
+          const initial = initialStates.get(obj.uuid);
+          const target = targetPositions.get(obj.uuid);
+          
+          if (initial && target) {
+            // Interpolate world position
+            const worldPos = new THREE.Vector3().lerpVectors(initial, target, eased);
+            
+            // Convert to local space
+            if (obj.parent) {
+              const localPos = obj.parent.worldToLocal(worldPos.clone());
+              obj.position.copy(localPos);
+            } else {
+              obj.position.copy(worldPos);
+            }
+          }
+        });
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateAssembly);
+        } else {
+          console.log('Assembly complete');
+          assembleBtn.disabled = false;
+          assembleBtn.textContent = 'Auto-assemble';
+          frameObject(currentModel);
+        }
+      }
+      
+      console.log('Starting animation');
+      animateAssembly();
+    }
+    
+    const assembleBtn = document.getElementById('assembleBtn');
+    assembleBtn.addEventListener('click', autoAssemble);
+    
+    // Scramble functionality
+    const scrambleBtn = document.getElementById('scrambleBtn');
+    const scrambleControls = document.getElementById('scrambleControls');
+    const scrambleRadius = document.getElementById('scrambleRadius');
+    const radiusValue = document.getElementById('radiusValue');
+    const stopScrambleBtn = document.getElementById('stopScrambleBtn');
+    let scrambleActive = false;
+    let scrambleAnimationId = null;
+    let scrambleData = new Map(); // stores center, velocity, target for each object
+    
+    // Update radius display
+    scrambleRadius.addEventListener('input', () => {
+      radiusValue.textContent = parseFloat(scrambleRadius.value).toFixed(1) + 'x';
+    });
+    
+    // Start scramble
+    scrambleBtn.addEventListener('click', () => {
+      if (!scrambleActive) {
+        startScramble();
+      }
+    });
+    
+    // Stop scramble
+    stopScrambleBtn.addEventListener('click', () => {
+      stopScramble();
+    });
+    
+    function startScramble() {
+      if (draggableObjects.length < 2) return;
+      
+      scrambleActive = true;
+      scrambleBtn.disabled = true;
+      scrambleBtn.textContent = 'Scrambling...';
+      scrambleControls.classList.remove('hidden');
+      
+      console.log('Starting continuous scramble');
+      
+      // Calculate center point and average distance
+      const center = new THREE.Vector3();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        center.add(worldPos);
+      });
+      center.divideScalar(draggableObjects.length);
+      
+      let avgDistance = 0;
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        avgDistance += worldPos.distanceTo(center);
+      });
+      avgDistance /= draggableObjects.length;
+      
+      // Initialize scramble data for each object
+      draggableObjects.forEach(obj => {
+        // Random velocity
+        const velocity = new THREE.Vector3(
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02
+        );
+        
+        scrambleData.set(obj.uuid, {
+          center: center.clone(),
+          avgDistance: avgDistance,
+          velocity: velocity,
+          offset: new THREE.Vector3()
+        });
+      });
+      
+      animateScramble();
+    }
+    
+    function animateScramble() {
+      if (!scrambleActive) return;
+      
+      const radius = parseFloat(scrambleRadius.value);
+      
+      draggableObjects.forEach(obj => {
+        const data = scrambleData.get(obj.uuid);
+        if (!data) return;
+        
+        const boundaryRadius = data.avgDistance * radius;
+        
+        // Update offset position
+        data.offset.add(data.velocity);
+        
+        // Check boundary and bounce
+        const distanceFromCenter = data.offset.length();
+        if (distanceFromCenter > boundaryRadius) {
+          // Bounce back by reversing velocity and adding randomness
+          const normal = data.offset.clone().normalize();
+          data.velocity.reflect(normal);
+          data.velocity.multiplyScalar(0.9); // slight damping
+          
+          // Add some randomness to avoid synchronization
+          data.velocity.x += (Math.random() - 0.5) * 0.005;
+          data.velocity.y += (Math.random() - 0.5) * 0.005;
+          data.velocity.z += (Math.random() - 0.5) * 0.005;
+          
+          // Push back inside boundary
+          data.offset.normalize().multiplyScalar(boundaryRadius * 0.95);
+        }
+        
+        // Apply position
+        const worldPos = data.center.clone().add(data.offset);
+        
+        if (obj.parent) {
+          const localPos = obj.parent.worldToLocal(worldPos.clone());
+          obj.position.copy(localPos);
+        } else {
+          obj.position.copy(worldPos);
+        }
+      });
+      
+      scrambleAnimationId = requestAnimationFrame(animateScramble);
+    }
+    
+    function stopScramble() {
+      if (!scrambleActive) return;
+      
+      scrambleActive = false;
+      if (scrambleAnimationId) {
+        cancelAnimationFrame(scrambleAnimationId);
+        scrambleAnimationId = null;
+      }
+      
+      scrambleBtn.disabled = false;
+      scrambleBtn.textContent = 'Start Scramble';
+      scrambleControls.classList.add('hidden');
+      scrambleData.clear();
+      
+      console.log('Scramble stopped');
+    }
+    
+    // Lighting controls
+    const fullBrightBtn = document.getElementById('fullBrightBtn');
+    const resetLightBtn = document.getElementById('resetLightBtn');
+    
+    fullBrightBtn.addEventListener('click', () => {
+      // Full brightness from all angles
+      ambientLight.intensity = 2.5;
+      dirLight1.intensity = 1.5;
+      dirLight2.intensity = 1.5;
+      dirLight3.intensity = 1.5;
+      renderer.toneMappingExposure = 1.8;
+      
+      fullBrightBtn.classList.add('active');
+      resetLightBtn.classList.remove('active');
+    });
+    
+    resetLightBtn.addEventListener('click', () => {
+      // Reset to default lighting
+      ambientLight.intensity = defaultLighting.ambient;
+      dirLight1.intensity = defaultLighting.dir1;
+      dirLight2.intensity = defaultLighting.dir2;
+      dirLight3.intensity = defaultLighting.dir3;
+      renderer.toneMappingExposure = defaultLighting.exposure;
+      
+      resetLightBtn.classList.add('active');
+      fullBrightBtn.classList.remove('active');
+    });
+    
+    // Download button
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.addEventListener('click', () => {
+      if (!currentModel) return;
+      
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Exporting...';
+      
+      const exporter = new GLTFExporter();
+      
+      exporter.parse(
+        currentModel,
+        (gltf) => {
+          // Convert to JSON string
+          const output = JSON.stringify(gltf, null, 2);
+          
+          // Create blob and download
+          const blob = new Blob([output], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'modified-artifact.gltf';
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = 'Download GLB';
+        },
+        (error) => {
+          console.error('Export error:', error);
+          alert('Failed to export model');
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = 'Download GLB';
+        },
+        { binary: false }
+      );
+    });
+    
+    // Slicing mode
+    const sliceModeBtn = document.getElementById('sliceModeBtn');
+    const slicingControls = document.getElementById('slicingControls');
+    const slicePosition = document.getElementById('slicePosition');
+    const sliceAxis = document.getElementById('sliceAxis');
+    const flipSliceBtn = document.getElementById('flipSliceBtn');
+    let sliceDirection = -1;
+    
+    sliceModeBtn.addEventListener('click', () => {
+      slicingEnabled = !slicingEnabled;
+      
+      if (slicingEnabled) {
+        sliceModeBtn.classList.add('active');
+        sliceModeBtn.textContent = 'Exit Slicing';
+        slicingControls.classList.remove('hidden');
+        updateSlicing();
+      } else {
+        sliceModeBtn.classList.remove('active');
+        sliceModeBtn.textContent = 'Slicing Mode';
+        slicingControls.classList.add('hidden');
+        // Disable clipping on all materials
+        if (currentModel) {
+          currentModel.traverse(obj => {
+            if (obj.isMesh && obj.material) {
+              const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+              materials.forEach(mat => {
+                mat.clippingPlanes = [];
+                mat.needsUpdate = true;
+              });
+            }
+          });
+        }
+      }
+    });
+    
+    function updateSlicing() {
+      if (!slicingEnabled || !currentModel) return;
+      
+      const pos = parseFloat(slicePosition.value);
+      const axis = sliceAxis.value;
+      
+      // Set plane normal based on axis
+      if (axis === 'x') {
+        clippingPlane.normal.set(sliceDirection, 0, 0);
+      } else if (axis === 'y') {
+        clippingPlane.normal.set(0, sliceDirection, 0);
+      } else if (axis === 'z') {
+        clippingPlane.normal.set(0, 0, sliceDirection);
+      }
+      
+      clippingPlane.constant = pos;
+      
+      // Apply clipping plane to all materials
+      currentModel.traverse(obj => {
+        if (obj.isMesh && obj.material) {
+          const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+          materials.forEach(mat => {
+            mat.clippingPlanes = [clippingPlane];
+            mat.clipShadows = true;
+            mat.needsUpdate = true;
+          });
+        }
+      });
+    }
+    
+    slicePosition.addEventListener('input', updateSlicing);
+    sliceAxis.addEventListener('change', updateSlicing);
+    
+    flipSliceBtn.addEventListener('click', () => {
+      sliceDirection *= -1;
+      updateSlicing();
+    });
+    
+    // Wireframe/boundaries mode
+    const wireframeBtn = document.getElementById('wireframeBtn');
+    
+    wireframeBtn.addEventListener('click', () => {
+      wireframeMode = !wireframeMode;
+      
+      if (wireframeMode) {
+        wireframeBtn.classList.add('active');
+        wireframeBtn.textContent = 'Hide Boundaries';
+        showBoundaries();
+      } else {
+        wireframeBtn.classList.remove('active');
+        wireframeBtn.textContent = 'Show Boundaries';
+        hideBoundaries();
+      }
+    });
+    
+    function showBoundaries() {
+      if (!currentModel) return;
+      
+      currentModel.traverse(obj => {
+        if (obj.isMesh) {
+          // Create edge geometry
+          const edges = new THREE.EdgesGeometry(obj.geometry, 15);
+          const lineMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00ff00,
+            linewidth: 2,
+            transparent: true,
+            opacity: 0.8
+          });
+          const edgesHelper = new THREE.LineSegments(edges, lineMaterial);
+          
+          // Match the mesh's initial transform
+          edgesHelper.position.copy(obj.position);
+          edgesHelper.rotation.copy(obj.rotation);
+          edgesHelper.quaternion.copy(obj.quaternion);
+          edgesHelper.scale.copy(obj.scale);
+          
+          // Add to same parent as mesh
+          if (obj.parent) {
+            obj.parent.add(edgesHelper);
+          }
+          
+          // Store reference
+          edgesHelpers.push({ mesh: obj, helper: edgesHelper });
+        }
+      });
+    }
+    
+    function hideBoundaries() {
+      edgesHelpers.forEach(({ mesh, helper }) => {
+        if (helper.parent) {
+          helper.parent.remove(helper);
+        }
+        helper.geometry.dispose();
+        helper.material.dispose();
+      });
+      edgesHelpers = [];
+    }
+    
+    // Edge helpers are now parented to meshes, so they automatically follow
+    // No need for manual updates during drag
+    
+    // Grid toggle and controls
+    const gridBtn = document.getElementById('gridBtn');
+    const gridControls = document.getElementById('gridControls');
+    const gridHeight = document.getElementById('gridHeight');
+    const heightValue = document.getElementById('heightValue');
+    
+    // Update height display and grid position
+    gridHeight.addEventListener('input', () => {
+      const height = parseFloat(gridHeight.value);
+      heightValue.textContent = height.toFixed(1);
+      if (gridHelper) {
+        gridHelper.position.y = height;
+      }
+    });
+    
+    gridBtn.addEventListener('click', () => {
+      gridVisible = !gridVisible;
+      
+      if (gridVisible) {
+        gridBtn.classList.add('active');
+        gridBtn.textContent = 'Hide Grid';
+        gridControls.classList.remove('hidden');
+        showGrid();
+      } else {
+        gridBtn.classList.remove('active');
+        gridBtn.textContent = 'Show Grid';
+        gridControls.classList.add('hidden');
+        hideGrid();
+      }
+    });
+    
+    function showGrid() {
+      if (gridHelper) return; // Already visible
+      
+      // Create grid helper
+      const size = 10;
+      const divisions = 20;
+      gridHelper = new THREE.GridHelper(size, divisions, 0x888888, 0x444444);
+      gridHelper.material.transparent = true;
+      gridHelper.material.opacity = 0.5;
+      
+      // Set initial height from slider
+      const height = parseFloat(gridHeight.value);
+      gridHelper.position.y = height;
+      
+      scene.add(gridHelper);
+    }
+    
+    function hideGrid() {
+      if (!gridHelper) return;
+      
+      scene.remove(gridHelper);
+      gridHelper.geometry.dispose();
+      gridHelper.material.dispose();
+      gridHelper = null;
+    }
+    
+    // Gravity simulation
+    const gravityBtn = document.getElementById('gravityBtn');
+    
+    gravityBtn.addEventListener('click', () => {
+      gravityEnabled = !gravityEnabled;
+      
+      if (gravityEnabled) {
+        gravityBtn.classList.add('active');
+        gravityBtn.textContent = 'Stop Gravity';
+        startGravity();
+      } else {
+        gravityBtn.classList.remove('active');
+        gravityBtn.textContent = 'Gravity';
+        stopGravity();
+      }
+    });
+    
+    function startGravity() {
+      if (draggableObjects.length === 0) return;
+      
+      console.log('Starting gravity simulation');
+      
+      // Get floor height from grid
+      const floorY = gridHelper ? gridHelper.position.y : 0;
+      
+      // Initialize physics for each object
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        
+        // Calculate bounding box to get bottom position
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const objectBottom = bbox.min.y;
+        const objectHeight = bbox.max.y - bbox.min.y;
+        
+        physicsData.set(obj.uuid, {
+          velocity: new THREE.Vector3(0, 0, 0),
+          objectHeight: objectHeight,
+          mass: 1.0,
+          restitution: 0.4, // bounciness
+          friction: 0.8,
+          isGrounded: false
+        });
+      });
+      
+      animateGravity();
+    }
+    
+    function animateGravity() {
+      if (!gravityEnabled) return;
+      
+      const floorY = gridHelper ? gridHelper.position.y : 0;
+      const gravity = -0.01; // gravity acceleration
+      const damping = 0.98; // air resistance
+      const dt = 1; // time step
+      
+      draggableObjects.forEach(obj => {
+        const data = physicsData.get(obj.uuid);
+        if (!data) return;
+        
+        // Get current world position
+        const worldPos = new THREE.Vector3();
+        obj.getWorldPosition(worldPos);
+        
+        // Calculate bottom of object
+        const bbox = new THREE.Box3().setFromObject(obj);
+        const objectBottom = bbox.min.y;
+        
+        // Apply gravity
+        data.velocity.y += gravity * dt;
+        
+        // Update position
+        worldPos.add(data.velocity);
+        
+        // Ground collision
+        if (objectBottom + data.velocity.y <= floorY) {
+          // Position at floor
+          worldPos.y = floorY + (worldPos.y - objectBottom);
+          
+          // Bounce
+          if (Math.abs(data.velocity.y) > 0.001) {
+            data.velocity.y = -data.velocity.y * data.restitution;
+          } else {
+            // Stop bouncing if velocity too small
+            data.velocity.y = 0;
+            data.isGrounded = true;
+          }
+          
+          // Apply friction to horizontal movement
+          data.velocity.x *= data.friction;
+          data.velocity.z *= data.friction;
+        }
+        
+        // Apply damping to velocity
+        data.velocity.multiplyScalar(damping);
+        
+        // Set position
+        if (obj.parent) {
+          const localPos = obj.parent.worldToLocal(worldPos.clone());
+          obj.position.copy(localPos);
+        } else {
+          obj.position.copy(worldPos);
+        }
+      });
+      
+      gravityAnimationId = requestAnimationFrame(animateGravity);
+    }
+    
+    function stopGravity() {
+      if (!gravityEnabled) return;
+      
+      gravityEnabled = false;
+      if (gravityAnimationId) {
+        cancelAnimationFrame(gravityAnimationId);
+        gravityAnimationId = null;
+      }
+      
+      physicsData.clear();
+      console.log('Gravity simulation stopped');
+    }
+    
+    // Explode functionality
+    const explodeBtn = document.getElementById('explodeBtn');
+    
+    explodeBtn.addEventListener('click', () => {
+      explodeFragments();
+    });
+    
+    function explodeFragments() {
+      if (draggableObjects.length < 2) return;
+      
+      explodeBtn.disabled = true;
+      explodeBtn.textContent = 'Exploding...';
+      
+      console.log('Starting explode animation');
+      
+      // Store initial states
+      const initialStates = new Map();
+      const initialRotations = new Map();
+      draggableObjects.forEach(obj => {
+        const worldPos = new THREE.Vector3();
+        const worldRot = new THREE.Quaternion();
+        obj.getWorldPosition(worldPos);
+        obj.getWorldQuaternion(worldRot);
+        initialStates.set(obj.uuid, worldPos.clone());
+        initialRotations.set(obj.uuid, worldRot.clone());
+      });
+      
+      // Calculate center point
+      const center = new THREE.Vector3();
+      draggableObjects.forEach(obj => {
+        center.add(initialStates.get(obj.uuid));
+      });
+      center.divideScalar(draggableObjects.length);
+      
+      // Calculate target positions and rotations
+      const targetPositions = new Map();
+      const spinData = new Map();
+      
+      draggableObjects.forEach(obj => {
+        const initialPos = initialStates.get(obj.uuid);
+        
+        // Random direction in 3D sphere (uniform distribution)
+        const theta = Math.random() * Math.PI * 2; // Azimuthal angle (0 to 2π)
+        const phi = Math.acos(2 * Math.random() - 1); // Polar angle (0 to π)
+        const direction = new THREE.Vector3(
+          Math.sin(phi) * Math.cos(theta),
+          Math.sin(phi) * Math.sin(theta),
+          Math.cos(phi)
+        );
+        
+        // Random distance (2 to 5 units from center)
+        const distance = 2 + Math.random() * 3;
+        
+        // Target position is center + random direction * distance
+        const targetPos = center.clone().add(direction.multiplyScalar(distance));
+        targetPositions.set(obj.uuid, targetPos);
+        
+        // Generate random spin velocities
+        const spinVelocity = new THREE.Vector3(
+          (Math.random() - 0.5) * Math.PI * 2, // X rotation
+          (Math.random() - 0.5) * Math.PI * 2, // Y rotation
+          (Math.random() - 0.5) * Math.PI * 2  // Z rotation
+        );
+        
+        spinData.set(obj.uuid, {
+          spinVelocity: spinVelocity,
+          currentRotation: new THREE.Euler(0, 0, 0)
+        });
+      });
+      
+      // Animate explosion
+      const explosionDuration = 2000; // 2 seconds for explosion
+      const waitDuration = 5000; // 5 seconds wait
+      const rotationDuration = 2000; // 2 seconds to reset rotation
+      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 9 seconds total
+      const startTime = Date.now();
+      
+      function animateExplode() {
+        const elapsed = Date.now() - startTime;
+        const totalProgress = Math.min(elapsed / totalDuration, 1);
+        
+        // Phase 1: Explosion (0-2 seconds)
+        if (elapsed < explosionDuration) {
+          const progress = elapsed / explosionDuration;
+          
+          // Easing for position (ease-out)
+          const posEased = 1 - Math.pow(1 - progress, 3);
+          
+          // Rotation slows down at the end
+          const rotProgress = progress < 0.9 ? progress : 0.9 + (progress - 0.9) * 0.1;
+        
+          draggableObjects.forEach(obj => {
+            const initial = initialStates.get(obj.uuid);
+            const target = targetPositions.get(obj.uuid);
+            const spin = spinData.get(obj.uuid);
+            const initialRot = initialRotations.get(obj.uuid);
+            
+            if (initial && target && spin) {
+              // Interpolate position
+              const worldPos = new THREE.Vector3().lerpVectors(initial, target, posEased);
+              
+              // Apply spinning during flight
+              const currentSpin = spin.spinVelocity.clone().multiplyScalar(rotProgress);
+              
+              // At the end, interpolate back to no rotation
+              if (progress > 0.8) {
+                // Blend from spinning to identity rotation
+                const resetProgress = (progress - 0.8) / 0.2; // 0 to 1 over last 20%
+                const resetEased = resetProgress * resetProgress; // Ease in
+                
+                // Create rotation from spin
+                const spinQuat = new THREE.Quaternion().setFromEuler(
+                  new THREE.Euler(currentSpin.x, currentSpin.y, currentSpin.z)
+                );
+                
+                // Identity quaternion (no rotation)
+                const identityQuat = new THREE.Quaternion();
+                
+                // Interpolate to identity
+                const finalQuat = new THREE.Quaternion().slerpQuaternions(spinQuat, identityQuat, resetEased);
+                obj.quaternion.copy(finalQuat);
+              } else {
+                // Normal spinning
+                obj.rotation.x = currentSpin.x;
+                obj.rotation.y = currentSpin.y;
+                obj.rotation.z = currentSpin.z;
+              }
+              
+              // Set position
+              if (obj.parent) {
+                const localPos = obj.parent.worldToLocal(worldPos.clone());
+                obj.position.copy(localPos);
+              } else {
+                obj.position.copy(worldPos);
+              }
+            }
+          });
+        }
+        // Phase 2: Wait (2-7 seconds) - pieces stay in exploded state with final spun rotation
+        else if (elapsed < explosionDuration + waitDuration) {
+          // Do nothing - pieces stay where they landed
+        }
+        // Phase 3: Rotate back to original (7-9 seconds)
+        else {
+          const rotElapsed = elapsed - explosionDuration - waitDuration;
+          const rotProgress = Math.min(rotElapsed / rotationDuration, 1);
+          const rotEased = rotProgress < 0.5 
+            ? 2 * rotProgress * rotProgress 
+            : 1 - Math.pow(-2 * rotProgress + 2, 2) / 2;
+          
+          draggableObjects.forEach(obj => {
+            const initialRot = initialRotations.get(obj.uuid);
+            const currentQuat = obj.quaternion.clone();
+            
+            // Slerp back to original rotation
+            const targetQuat = new THREE.Quaternion().slerpQuaternions(
+              currentQuat,
+              initialRot,
+              rotEased * 0.1 // Gradual blend
+            );
+            
+            obj.quaternion.copy(targetQuat);
+          });
+        }
+        
+        if (totalProgress < 1) {
+          requestAnimationFrame(animateExplode);
+        } else {
+          // Ensure all rotations are back to original
+          draggableObjects.forEach(obj => {
+            const originalRot = initialRotations.get(obj.uuid);
+            if (originalRot) {
+              obj.quaternion.copy(originalRot);
+            }
+          });
+          
+          explodeBtn.disabled = false;
+          explodeBtn.textContent = 'Explode';
+          frameObject(currentModel);
+          console.log('Explode complete');
+        }
+      }
+      
+      animateExplode();
+    }
+    
+    // Zoom controls
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+    
+    zoomInBtn.addEventListener('click', () => {
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      const distance = camera.position.distanceTo(controls.target);
+      const zoomAmount = distance * 0.2;
+      camera.position.addScaledVector(direction, zoomAmount);
+      controls.update();
+    });
+    
+    zoomOutBtn.addEventListener('click', () => {
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      const distance = camera.position.distanceTo(controls.target);
+      const zoomAmount = distance * 0.2;
+      camera.position.addScaledVector(direction, -zoomAmount);
+      controls.update();
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      
+      // Update edge helpers to follow meshes
+      if (wireframeMode && edgesHelpers.length > 0) {
+        edgesHelpers.forEach(({ mesh, helper }) => {
+          // Sync helper transform with mesh
+          helper.position.copy(mesh.position);
+          helper.rotation.copy(mesh.rotation);
+          helper.quaternion.copy(mesh.quaternion);
+          helper.scale.copy(mesh.scale);
+        });
+      }
+      
+      // Enforce grid floor constraint - prevent objects from passing through
+      if (gridHelper && draggableObjects.length > 0) {
+        const floorY = gridHelper.position.y;
+        
+        draggableObjects.forEach(obj => {
+          // Get bounding box
+          const bbox = new THREE.Box3().setFromObject(obj);
+          const objectBottom = bbox.min.y;
+          
+          // If object bottom is below floor, push it up
+          if (objectBottom < floorY) {
+            const worldPos = new THREE.Vector3();
+            obj.getWorldPosition(worldPos);
+            
+            // Calculate how much to lift the object
+            const correction = floorY - objectBottom;
+            worldPos.y += correction;
+            
+            // Apply corrected position
+            if (obj.parent) {
+              const localPos = obj.parent.worldToLocal(worldPos.clone());
+              obj.position.copy(localPos);
+            } else {
+              obj.position.copy(worldPos);
+            }
+          }
+        });
+      }
+      
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
