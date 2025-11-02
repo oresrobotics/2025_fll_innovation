@@ -561,6 +561,25 @@
       display: flex;
       gap: 5px;
     }
+    #fitViewBtn {
+      position: absolute;
+      bottom: 10px;
+      left: 56px;
+      z-index: 10;
+      padding: 6px 10px;
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #fitViewBtn:hover { background: #333; }
+    #fitViewBtn:disabled {
+      background: #1a1a1a;
+      color: #666;
+      cursor: not-allowed;
+    }
     .zoomBtn {
       width: 36px;
       height: 36px;
@@ -662,6 +681,7 @@
   <button id="gridBtn">Show Grid</button>
   <button id="gravityBtn" disabled>Gravity</button>
   <button id="explodeBtn" disabled>Explode</button>
+  <button id="fitViewBtn" disabled>Fit to View</button>
   <div id="gridControls" class="hidden">
     <label>Grid Height</label>
     <input type="range" id="gridHeight" min="-5" max="5" step="0.1" value="0">
@@ -860,12 +880,13 @@
         });
       }
       
-      // Enable assemble, download, scramble, gravity, and explode buttons
+      // Enable assemble, download, scramble, gravity, explode, and fit view buttons
       const assembleBtn = document.getElementById('assembleBtn');
       const downloadBtn = document.getElementById('downloadBtn');
       const scrambleBtn = document.getElementById('scrambleBtn');
       const gravityBtn = document.getElementById('gravityBtn');
       const explodeBtn = document.getElementById('explodeBtn');
+      const fitViewBtn = document.getElementById('fitViewBtn');
       if (draggableObjects.length > 1) {
         assembleBtn.disabled = false;
         scrambleBtn.disabled = false;
@@ -874,6 +895,7 @@
       if (draggableObjects.length > 0) {
         downloadBtn.disabled = false;
         gravityBtn.disabled = false;
+        fitViewBtn.disabled = false;
       }
 
       if (dragControls) {
@@ -1884,9 +1906,9 @@
       
       // Animate explosion
       const explosionDuration = 2000; // 2 seconds for explosion
-      const waitDuration = 5000; // 5 seconds wait
+      const waitDuration = 1000; // 1 second wait
       const rotationDuration = 2000; // 2 seconds to reset rotation
-      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 9 seconds total
+      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 5 seconds total
       const startTime = Date.now();
       
       function animateExplode() {
@@ -1950,11 +1972,11 @@
             }
           });
         }
-        // Phase 2: Wait (2-7 seconds) - pieces stay in exploded state with final spun rotation
+        // Phase 2: Wait (2-3 seconds) - pieces stay in exploded state with final spun rotation
         else if (elapsed < explosionDuration + waitDuration) {
           // Do nothing - pieces stay where they landed
         }
-        // Phase 3: Rotate back to original (7-9 seconds)
+        // Phase 3: Rotate back to original (3-5 seconds)
         else {
           const rotElapsed = elapsed - explosionDuration - waitDuration;
           const rotProgress = Math.min(rotElapsed / rotationDuration, 1);
@@ -1997,6 +2019,15 @@
       
       animateExplode();
     }
+    
+    // Fit to view button
+    const fitViewBtn = document.getElementById('fitViewBtn');
+    
+    fitViewBtn.addEventListener('click', () => {
+      if (currentModel) {
+        frameObject(currentModel);
+      }
+    });
     
     // Zoom controls
     const zoomInBtn = document.getElementById('zoomIn');
