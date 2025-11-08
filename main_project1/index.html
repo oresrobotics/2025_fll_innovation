@@ -561,25 +561,6 @@
       display: flex;
       gap: 5px;
     }
-    #fitViewBtn {
-      position: absolute;
-      bottom: 10px;
-      left: 56px;
-      z-index: 10;
-      padding: 6px 10px;
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    #fitViewBtn:hover { background: #333; }
-    #fitViewBtn:disabled {
-      background: #1a1a1a;
-      color: #666;
-      cursor: not-allowed;
-    }
     .zoomBtn {
       width: 36px;
       height: 36px;
@@ -597,6 +578,219 @@
     }
     .zoomBtn:hover { background: #333; }
     .zoomBtn:active { background: #444; }
+    
+    /* Artifact Encyclopedia Panel Styles */
+    #artifactEncyclopedia {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 320px;
+      background: rgba(43, 43, 43, 0.95);
+      border: 1px solid #555;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      max-height: calc(100vh - 20px);
+      overflow: hidden;
+    }
+    
+    #artifactEncyclopedia.collapsed {
+      max-height: 50px;
+    }
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #555;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .panel-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .toggle-btn {
+      background: none;
+      border: 1px solid #555;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .panel-content {
+      padding: 16px;
+      overflow-y: auto;
+      max-height: calc(100vh - 120px);
+    }
+    
+    .info-section {
+      margin-bottom: 16px;
+    }
+    
+    .info-section label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: #aaa;
+      text-transform: uppercase;
+    }
+    
+    .info-value {
+      display: block;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    
+    .coord-inputs {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .coord-inputs input {
+      flex: 1;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 13px;
+    }
+    
+    .coord-inputs input:focus {
+      border-color: #4a90e2;
+      outline: none;
+    }
+    
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 13px;
+      font-family: sans-serif;
+      box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus, textarea:focus {
+      border-color: #4a90e2;
+      outline: none;
+    }
+    
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .control-section {
+      margin-bottom: 20px;
+    }
+    
+    .control-section h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: #4a90e2;
+    }
+    
+    .transform-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .control-group label {
+      flex: 0 0 70px;
+      font-size: 12px;
+      color: #aaa;
+    }
+    
+    .control-group input[type="range"] {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #4a90e2;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .control-group span {
+      flex: 0 0 40px;
+      text-align: right;
+      font-size: 12px;
+      color: #4a90e2;
+    }
+    
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .action-buttons button {
+      padding: 8px 12px;
+      background: rgba(74, 144, 226, 0.2);
+      border: 1px solid #4a90e2;
+      color: #4a90e2;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    
+    .action-buttons button:hover {
+      background: rgba(74, 144, 226, 0.3);
+    }
+    
+    .action-buttons button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -681,7 +875,6 @@
   <button id="gridBtn">Show Grid</button>
   <button id="gravityBtn" disabled>Gravity</button>
   <button id="explodeBtn" disabled>Explode</button>
-  <button id="fitViewBtn" disabled>Fit to View</button>
   <div id="gridControls" class="hidden">
     <label>Grid Height</label>
     <input type="range" id="gridHeight" min="-5" max="5" step="0.1" value="0">
@@ -715,6 +908,72 @@
     <button class="sliceBtn" id="flipSliceBtn">Flip Direction</button>
   </div>
   <button id="wireframeBtn">Show Boundaries</button>
+  
+  <!-- Artifact Encyclopedia Panel -->
+  <div id="artifactEncyclopedia">
+    <div class="panel-header">
+      <h3>Artifact Encyclopedia</h3>
+      <button class="toggle-btn" id="togglePanel">−</button>
+    </div>
+    <div class="panel-content">
+      <div class="info-section">
+        <label>Artifact Name</label>
+        <input type="text" id="artifactName" placeholder="Enter artifact name">
+      </div>
+      
+      <div class="info-section">
+        <label>Origin</label>
+        <input type="text" id="artifactOrigin" placeholder="e.g., Egypt, 2000 BCE">
+      </div>
+      
+      <div class="info-section">
+        <label>Description</label>
+        <textarea id="artifactDescription" placeholder="Describe the artifact and its historical significance"></textarea>
+      </div>
+      
+      <div class="info-section">
+        <label>Current Position</label>
+        <div class="coord-inputs">
+          <input type="number" id="posX" placeholder="X" step="0.1">
+          <input type="number" id="posY" placeholder="Y" step="0.1">
+          <input type="number" id="posZ" placeholder="Z" step="0.1">
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h4>Transform Controls</h4>
+        <div class="transform-controls">
+          <div class="control-group">
+            <label>Rotation X</label>
+            <input type="range" id="rotationX" min="0" max="360" value="0">
+            <span id="rotationXValue">0°</span>
+          </div>
+          <div class="control-group">
+            <label>Rotation Y</label>
+            <input type="range" id="rotationY" min="0" max="360" value="0">
+            <span id="rotationYValue">0°</span>
+          </div>
+          <div class="control-group">
+            <label>Rotation Z</label>
+            <input type="range" id="rotationZ" min="0" max="360" value="0">
+            <span id="rotationZValue">0°</span>
+          </div>
+          <div class="control-group">
+            <label>Scale</label>
+            <input type="range" id="scale" min="0.1" max="2" step="0.1" value="1">
+            <span id="scaleValue">1.0x</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button id="resetTransform">Reset Transform</button>
+        <button id="saveInfo">Save Information</button>
+        <button id="exportData">Export Data</button>
+      </div>
+    </div>
+  </div>
+  
   <script type="importmap">
     {
       "imports": {
@@ -880,13 +1139,12 @@
         });
       }
       
-      // Enable assemble, download, scramble, gravity, explode, and fit view buttons
+      // Enable assemble, download, scramble, gravity, and explode buttons
       const assembleBtn = document.getElementById('assembleBtn');
       const downloadBtn = document.getElementById('downloadBtn');
       const scrambleBtn = document.getElementById('scrambleBtn');
       const gravityBtn = document.getElementById('gravityBtn');
       const explodeBtn = document.getElementById('explodeBtn');
-      const fitViewBtn = document.getElementById('fitViewBtn');
       if (draggableObjects.length > 1) {
         assembleBtn.disabled = false;
         scrambleBtn.disabled = false;
@@ -895,7 +1153,6 @@
       if (draggableObjects.length > 0) {
         downloadBtn.disabled = false;
         gravityBtn.disabled = false;
-        fitViewBtn.disabled = false;
       }
 
       if (dragControls) {
@@ -912,6 +1169,7 @@
         
         dragControls.addEventListener('dragend', () => {
           controls.enabled = true;
+          updateArtifactInfo();
         });
 
         // Visual feedback
@@ -1142,6 +1400,7 @@
             if (loadedCount === totalFiles) {
               frameObject(currentModel);
               setupDraggableObjects();
+              updateArtifactInfo();
             }
           },
           undefined,
@@ -1204,6 +1463,7 @@
               if (loadedCount === totalFiles) {
                 frameObject(currentModel);
                 setupDraggableObjects();
+                updateArtifactInfo();
               }
             },
             undefined,
@@ -1308,6 +1568,7 @@
           assembleBtn.disabled = false;
           assembleBtn.textContent = 'Auto-assemble';
           frameObject(currentModel);
+          updateArtifactInfo();
         }
       }
       
@@ -1452,6 +1713,7 @@
       scrambleData.clear();
       
       console.log('Scramble stopped');
+      updateArtifactInfo();
     }
     
     // Lighting controls
@@ -1832,6 +2094,7 @@
       
       physicsData.clear();
       console.log('Gravity simulation stopped');
+      updateArtifactInfo();
     }
     
     // Explode functionality
@@ -1906,9 +2169,9 @@
       
       // Animate explosion
       const explosionDuration = 2000; // 2 seconds for explosion
-      const waitDuration = 1000; // 1 second wait
+      const waitDuration = 5000; // 5 seconds wait
       const rotationDuration = 2000; // 2 seconds to reset rotation
-      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 5 seconds total
+      const totalDuration = explosionDuration + waitDuration + rotationDuration; // 9 seconds total
       const startTime = Date.now();
       
       function animateExplode() {
@@ -1972,11 +2235,11 @@
             }
           });
         }
-        // Phase 2: Wait (2-3 seconds) - pieces stay in exploded state with final spun rotation
+        // Phase 2: Wait (2-7 seconds) - pieces stay in exploded state with final spun rotation
         else if (elapsed < explosionDuration + waitDuration) {
           // Do nothing - pieces stay where they landed
         }
-        // Phase 3: Rotate back to original (3-5 seconds)
+        // Phase 3: Rotate back to original (7-9 seconds)
         else {
           const rotElapsed = elapsed - explosionDuration - waitDuration;
           const rotProgress = Math.min(rotElapsed / rotationDuration, 1);
@@ -2014,20 +2277,12 @@
           explodeBtn.textContent = 'Explode';
           frameObject(currentModel);
           console.log('Explode complete');
+          updateArtifactInfo();
         }
       }
       
       animateExplode();
     }
-    
-    // Fit to view button
-    const fitViewBtn = document.getElementById('fitViewBtn');
-    
-    fitViewBtn.addEventListener('click', () => {
-      if (currentModel) {
-        frameObject(currentModel);
-      }
-    });
     
     // Zoom controls
     const zoomInBtn = document.getElementById('zoomIn');
@@ -2050,6 +2305,206 @@
       camera.position.addScaledVector(direction, -zoomAmount);
       controls.update();
     });
+
+    // Artifact Encyclopedia Panel Functions
+    const artifactEncyclopedia = document.getElementById('artifactEncyclopedia');
+    const togglePanelBtn = document.getElementById('togglePanel');
+    const artifactNameInput = document.getElementById('artifactName');
+    const artifactOriginInput = document.getElementById('artifactOrigin');
+    const artifactDescriptionInput = document.getElementById('artifactDescription');
+    const posXInput = document.getElementById('posX');
+    const posYInput = document.getElementById('posY');
+    const posZInput = document.getElementById('posZ');
+    const rotationXSlider = document.getElementById('rotationX');
+    const rotationYSlider = document.getElementById('rotationY');
+    const rotationZSlider = document.getElementById('rotationZ');
+    const scaleSlider = document.getElementById('scale');
+    const rotationXValue = document.getElementById('rotationXValue');
+    const rotationYValue = document.getElementById('rotationYValue');
+    const rotationZValue = document.getElementById('rotationZValue');
+    const scaleValue = document.getElementById('scaleValue');
+    const resetTransformBtn = document.getElementById('resetTransform');
+    const saveInfoBtn = document.getElementById('saveInfo');
+    const exportDataBtn = document.getElementById('exportData');
+    
+    // Toggle panel collapse/expand
+    togglePanelBtn.addEventListener('click', () => {
+      artifactEncyclopedia.classList.toggle('collapsed');
+      togglePanelBtn.textContent = artifactEncyclopedia.classList.contains('collapsed') ? '+' : '−';
+    });
+    
+    // Update rotation value displays
+    rotationXSlider.addEventListener('input', () => {
+      rotationXValue.textContent = rotationXSlider.value + '°';
+      updateModelTransform();
+    });
+    
+    rotationYSlider.addEventListener('input', () => {
+      rotationYValue.textContent = rotationYSlider.value + '°';
+      updateModelTransform();
+    });
+    
+    rotationZSlider.addEventListener('input', () => {
+      rotationZValue.textContent = rotationZSlider.value + '°';
+      updateModelTransform();
+    });
+    
+    scaleSlider.addEventListener('input', () => {
+      scaleValue.textContent = scaleSlider.value + 'x';
+      updateModelTransform();
+    });
+    
+    // Position inputs
+    posXInput.addEventListener('input', updateModelTransform);
+    posYInput.addEventListener('input', updateModelTransform);
+    posZInput.addEventListener('input', updateModelTransform);
+    
+    // Update model transform based on panel inputs
+    function updateModelTransform() {
+      if (!currentModel) return;
+      
+      const posX = parseFloat(posXInput.value) || 0;
+      const posY = parseFloat(posYInput.value) || 0;
+      const posZ = parseFloat(posZInput.value) || 0;
+      const rotX = THREE.MathUtils.degToRad(parseFloat(rotationXSlider.value) || 0);
+      const rotY = THREE.MathUtils.degToRad(parseFloat(rotationYSlider.value) || 0);
+      const rotZ = THREE.MathUtils.degToRad(parseFloat(rotationZSlider.value) || 0);
+      const scale = parseFloat(scaleSlider.value) || 1;
+      
+      currentModel.position.set(posX, posY, posZ);
+      currentModel.rotation.set(rotX, rotY, rotZ);
+      currentModel.scale.set(scale, scale, scale);
+    }
+    
+    // Reset transform button
+    resetTransformBtn.addEventListener('click', () => {
+      if (!currentModel) return;
+      
+      // Reset model transform
+      currentModel.position.set(0, 0, 0);
+      currentModel.rotation.set(0, 0, 0);
+      currentModel.scale.set(1, 1, 1);
+      
+      // Reset panel inputs
+      posXInput.value = 0;
+      posYInput.value = 0;
+      posZInput.value = 0;
+      rotationXSlider.value = 0;
+      rotationYSlider.value = 0;
+      rotationZSlider.value = 0;
+      scaleSlider.value = 1;
+      
+      // Update displays
+      rotationXValue.textContent = '0°';
+      rotationYValue.textContent = '0°';
+      rotationZValue.textContent = '0°';
+      scaleValue.textContent = '1.0x';
+    });
+    
+    // Save artifact info
+    saveInfoBtn.addEventListener('click', () => {
+      const artifactData = {
+        name: artifactNameInput.value,
+        origin: artifactOriginInput.value,
+        description: artifactDescriptionInput.value,
+        position: {
+          x: posXInput.value,
+          y: posYInput.value,
+          z: posZInput.value
+        },
+        rotation: {
+          x: rotationXSlider.value,
+          y: rotationYSlider.value,
+          z: rotationZSlider.value
+        },
+        scale: scaleSlider.value
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('artifactData', JSON.stringify(artifactData));
+      
+      // Show confirmation
+      const originalText = saveInfoBtn.textContent;
+      saveInfoBtn.textContent = 'Saved!';
+      saveInfoBtn.disabled = true;
+      
+      setTimeout(() => {
+        saveInfoBtn.textContent = originalText;
+        saveInfoBtn.disabled = false;
+      }, 2000);
+    });
+    
+    // Export artifact data
+    exportDataBtn.addEventListener('click', () => {
+      const artifactData = {
+        name: artifactNameInput.value,
+        origin: artifactOriginInput.value,
+        description: artifactDescriptionInput.value,
+        position: {
+          x: posXInput.value,
+          y: posYInput.value,
+          z: posZInput.value
+        },
+        rotation: {
+          x: rotationXSlider.value,
+          y: rotationYSlider.value,
+          z: rotationZSlider.value
+        },
+        scale: scaleSlider.value,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Create and download JSON file
+      const dataStr = JSON.stringify(artifactData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'artifact-data.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    });
+    
+    // Update artifact info panel with current model data
+    function updateArtifactInfo() {
+      if (!currentModel) return;
+      
+      // Update position inputs
+      posXInput.value = currentModel.position.x.toFixed(2);
+      posYInput.value = currentModel.position.y.toFixed(2);
+      posZInput.value = currentModel.position.z.toFixed(2);
+      
+      // Update rotation sliders
+      const rotX = THREE.MathUtils.radToDeg(currentModel.rotation.x);
+      const rotY = THREE.MathUtils.radToDeg(currentModel.rotation.y);
+      const rotZ = THREE.MathUtils.radToDeg(currentModel.rotation.z);
+      
+      rotationXSlider.value = rotX.toFixed(0);
+      rotationYSlider.value = rotY.toFixed(0);
+      rotationZSlider.value = rotZ.toFixed(0);
+      
+      rotationXValue.textContent = rotX.toFixed(0) + '°';
+      rotationYValue.textContent = rotY.toFixed(0) + '°';
+      rotationZValue.textContent = rotZ.toFixed(0) + '°';
+      
+      // Update scale slider
+      scaleSlider.value = currentModel.scale.x.toFixed(1);
+      scaleValue.textContent = currentModel.scale.x.toFixed(1) + 'x';
+      
+      // Load saved data if available
+      const savedData = localStorage.getItem('artifactData');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
+          if (!artifactNameInput.value) artifactNameInput.value = data.name || '';
+          if (!artifactOriginInput.value) artifactOriginInput.value = data.origin || '';
+          if (!artifactDescriptionInput.value) artifactDescriptionInput.value = data.description || '';
+        } catch (e) {
+          console.error('Error parsing saved artifact data:', e);
+        }
+      }
+    }
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -2107,3 +2562,4 @@
   </script>
 </body>
 </html>
+
