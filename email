@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailBox - Free Public Email Service</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #4285f4;
+            --primary-dark: #3367d6;
+            --secondary-color: #34a853;
+            --danger-color: #ea4335;
+            --warning-color: #fbbc05;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --border-color: #dadce0;
+            --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --shadow-elevated: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        /* Auth Section Styles */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 1rem;
+        }
+
+        .auth-card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-elevated);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Email Client Styles */
+        .email-client {
+            display: none;
+            height: calc(100vh - 80px);
+        }
+
+        .email-client.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-header {
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .client-body {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .compose-btn {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Email List Styles */
+        .email-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: var(--surface-color);
+        }
+
+        .email-list-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .email-list {
+            list-style: none;
+        }
+
+        .email-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .email-item:hover {
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+
+        .email-item.unread {
+            background-color: rgba(66, 133, 244, 0.08);
+            font-weight: 500;
+        }
+
+        .email-checkbox {
+            width: 18px;
+            height: 18px;
+        }
+
+        .email-sender {
+            width: 150px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .email-subject {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .email-date {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        /* Email Content Styles */
+        .email-content {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            background-color: var(--surface-color);
+        }
+
+        .email-content.active {
+            display: flex;
+        }
+
+        .email-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .email-subject-line {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .email-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .email-from {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .email-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .email-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Compose Email Styles */
+        .compose-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-elevated);
+            z-index: 200;
+            flex-direction: column;
+        }
+
+        .compose-modal.active {
+            display: flex;
+        }
+
+        .compose-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compose-body {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compose-field {
+            margin-bottom: 1rem;
+        }
+
+        .compose-textarea {
+            flex-grow: 1;
+            min-height: 200px;
+            resize: none;
+        }
+
+        .compose-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #323232;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: var(--shadow-elevated);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .client-body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .email-list-container {
+                width: 100%;
+            }
+
+            .compose-modal {
+                max-width: 100%;
+            }
+
+            .email-sender {
+                width: 100px;
+            }
+
+            .email-date {
+                display: none;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-1 {
+            margin-top: 0.5rem;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .mb-1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">M</div>
+                <span>MailBox</span>
+            </div>
+            <div id="headerUserInfo" class="hidden">
+                <span id="headerUserEmail"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Authentication Section -->
+        <section id="authSection" class="auth-container">
+            <div class="auth-card">
+                <h2 id="authTitle" class="auth-title">Sign In to MailBox</h2>
+                <form id="authForm">
+                    <div id="nameField" class="form-group hidden">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" id="authSubmitBtn" class="btn btn-primary btn-block">Sign In</button>
+                </form>
+                <div class="mt-2 text-center">
+                    <p id="authToggleText">Don't have an account? <a href="#" id="authToggleLink">Sign Up</a></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Email Client Section -->
+        <section id="emailClient" class="email-client">
+            <div class="client-header">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search emails...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="user-menu">
+                    <span id="userEmail"></span>
+                    <div id="userAvatar" class="user-avatar"></div>
+                    <button id="logoutBtn" class="btn btn-danger">Logout</button>
+                </div>
+            </div>
+
+            <div class="client-body">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <button id="composeBtn" class="btn btn-secondary compose-btn">
+                        <span>✉️</span> Compose
+                    </button>
+                    <nav>
+                        <ul class="nav-menu">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link active" data-folder="inbox">
+                                    <span class="nav-icon">📥</span> Inbox
+                                    <span id="inboxCount" class="nav-count">(0)</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" data-folder="sent">
+                                    <span class="nav-icon">📤</span> Sent
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" data-folder="drafts">
+                                    <span class="nav-icon">📝</span> Drafts
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" data-folder="starred">
+                                    <span class="nav-icon">⭐</span> Starred
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" data-folder="trash">
+                                    <span class="nav-icon">🗑️</span> Trash
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- Email List -->
+                <div class="email-list-container">
+                    <div class="email-list-header">
+                        <h3 id="folderTitle">Inbox</h3>
+                        <div>
+                            <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+                            <button id="deleteSelectedBtn" class="btn btn-danger hidden">Delete Selected</button>
+                        </div>
+                    </div>
+                    <ul id="emailList" class="email-list">
+                        <!-- Email items will be dynamically added here -->
+                    </ul>
+                </div>
+
+                <!-- Email Content -->
+                <div id="emailContent" class="email-content">
+                    <div class="email-header">
+                        <h2 id="emailSubject" class="email-subject-line"></h2>
+                        <div class="email-meta">
+                            <div class="email-from">
+                                <div id="senderAvatar" class="user-avatar"></div>
+                                <div>
+                                    <div id="senderName"></div>
+                                    <div id="senderEmail"></div>
+                                </div>
+                            </div>
+                            <div class="email-actions">
+                                <button id="replyBtn" class="btn btn-primary">Reply</button>
+                                <button id="forwardBtn" class="btn btn-primary">Forward</button>
+                                <button id="starBtn" class="btn btn-secondary">Star</button>
+                                <button id="deleteBtn" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="emailBody" class="email-body">
+                        <!-- Email content will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compose Email Modal -->
+        <div id="composeModal" class="compose-modal">
+            <div class="compose-header">
+                <h3>New Message</h3>
+                <button id="closeComposeBtn" class="btn btn-secondary">✕</button>
+            </div>
+            <div class="compose-body">
+                <div class="compose-field">
+                    <input type="email" id="composeTo" placeholder="Recipients">
+                </div>
+                <div class="compose-field">
+                    <input type="text" id="composeSubject" placeholder="Subject">
+                </div>
+                <div class="compose-field">
+                    <textarea id="composeBody" class="compose-textarea" placeholder="Compose email"></textarea>
+                </div>
+            </div>
+            <div class="compose-footer">
+                <button id="saveDraftBtn" class="btn btn-secondary">Save Draft</button>
+                <button id="sendEmailBtn" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </main>
+
+    <script>
+        // Email Service Application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Application State
+            const app = {
+                currentUser: null,
+                currentFolder: 'inbox',
+                currentEmail: null,
+                isComposing: false,
+                isReplying: false,
+                isForwarding: false
+            };
+
+            // DOM Elements
+            const authSection = document.getElementById('authSection');
+            const emailClient = document.getElementById('emailClient');
+            const authForm = document.getElementById('authForm');
+            const authTitle = document.getElementById('authTitle');
+            const authSubmitBtn = document.getElementById('authSubmitBtn');
+            const authToggleText = document.getElementById('authToggleText');
+            const authToggleLink = document.getElementById('authToggleLink');
+            const nameField = document.getElementById('nameField');
+            const emailList = document.getElementById('emailList');
+            const emailContent = document.getElementById('emailContent');
+            const composeModal = document.getElementById('composeModal');
+            const toast = document.getElementById('toast');
+            const folderTitle = document.getElementById('folderTitle');
+            const inboxCount = document.getElementById('inboxCount');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+            // Initialize the application
+            init();
+
+            function init() {
+                // Check if user is already logged in
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    app.currentUser = JSON.parse(currentUser);
+                    showEmailClient();
+                }
+
+                // Setup event listeners
+                setupEventListeners();
+
+                // Initialize sample data if needed
+                initializeSampleData();
+            }
+
+            function setupEventListeners() {
+                // Auth form submission
+                authForm.addEventListener('submit', handleAuth);
+
+                // Auth toggle (login/register)
+                authToggleLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleAuthMode();
+                });
+
+                // Logout button
+                document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+                // Compose button
+                document.getElementById('composeBtn').addEventListener('click', openComposeModal);
+
+                // Close compose modal
+                document.getElementById('closeComposeBtn').addEventListener('click', closeComposeModal);
+
+                // Send email
+                document.getElementById('sendEmailBtn').addEventListener('click', sendEmail);
+
+                // Save draft
+                document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+
+                // Navigation links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const folder = this.getAttribute('data-folder');
+                        navigateToFolder(folder);
+                    });
+                });
+
+                // Email actions
+                document.getElementById('replyBtn').addEventListener('click', replyToEmail);
+                document.getElementById('forwardBtn').addEventListener('click', forwardEmail);
+                document.getElementById('starBtn').addEventListener('click', toggleStarEmail);
+                document.getElementById('deleteBtn').addEventListener('click', deleteEmail);
+
+                // Refresh button
+                document.getElementById('refreshBtn').addEventListener('click', refreshEmailList);
+
+                // Search functionality
+                document.getElementById('searchInput').addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    filterEmails(searchTerm);
+                });
+
+                // Delete selected emails
+                deleteSelectedBtn.addEventListener('click', deleteSelectedEmails);
+            }
+
+            function handleAuth(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const isLogin = authTitle.textContent === 'Sign In to MailBox';
+
+                if (isLogin) {
+                    // Login logic
+                    const users = JSON.parse(localStorage.getItem('users') || '{}');
+                    if (users[email] && users[email].password === password) {
+                        app.currentUser = users[email];
+                        localStorage.setItem('currentUser', JSON.stringify(app.currentUser));
+                        showToast('Login successful!');
+                        showEmailClient();
+                    } else {
+                        showToast('Invalid email or password');
+                    }
+                } else {
+                    // Register logic
+                    const name = document.getElementById('name').value;
+                    const users = JSON.parse(localStorage.getItem('users') || '{}');
+                    
+                    if (users[email]) {
+                        showToast('Email already exists');
+                        return;
+                    }
+
+                    // Create new user
+                    const newUser = {
+                        name,
+                        email,
+                        password,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    users[email] = newUser;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    // Initialize user's email folders
+                    initializeUserEmails(email);
+                    
+                    showToast('Registration successful! Please sign in.');
+                    toggleAuthMode();
+                }
+            }
+
+            function toggleAuthMode() {
+                const isLogin = authTitle.textContent === 'Sign In to MailBox';
+                
+                if (isLogin) {
+                    authTitle.textContent = 'Create Your MailBox Account';
+                    authSubmitBtn.textContent = 'Sign Up';
+                    authToggleText.innerHTML = 'Already have an account? <a href="#" id="authToggleLink">Sign In</a>';
+                    nameField.classList.remove('hidden');
+                } else {
+                    authTitle.textContent = 'Sign In to MailBox';
+                    authSubmitBtn.textContent = 'Sign In';
+                    authToggleText.innerHTML = 'Don\'t have an account? <a href="#" id="authToggleLink">Sign Up</a>';
+                    nameField.classList.add('hidden');
+                }
+                
+                // Re-attach event listener to the new toggle link
+                document.getElementById('authToggleLink').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleAuthMode();
+                });
+            }
+
+            function showEmailClient() {
+                authSection.classList.add('hidden');
+                emailClient.classList.add('active');
+                
+                // Update user info in header
+                document.getElementById('headerUserInfo').classList.remove('hidden');
+                document.getElementById('headerUserEmail').textContent = app.currentUser.email;
+                document.getElementById('userEmail').textContent = app.currentUser.email;
+                document.getElementById('userAvatar').textContent = app.currentUser.name.charAt(0).toUpperCase();
+                
+                // Load inbox
+                navigateToFolder('inbox');
+            }
+
+            function handleLogout() {
+                localStorage.removeItem('currentUser');
+                app.currentUser = null;
+                emailClient.classList.remove('active');
+                authSection.classList.remove('hidden');
+                document.getElementById('headerUserInfo').classList.add('hidden');
+                authForm.reset();
+                showToast('You have been logged out');
+            }
+
+            function navigateToFolder(folder) {
+                app.currentFolder = folder;
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-folder') === folder) {
+                        link.classList.add('active');
+                    }
+                });
+                
+                // Update folder title
+                folderTitle.textContent = folder.charAt(0).toUpperCase() + folder.slice(1);
+                
+                // Load emails for this folder
+                loadEmails(folder);
+                
+                // Hide email content
+                emailContent.classList.remove('active');
+                app.currentEmail = null;
+            }
+
+            function loadEmails(folder) {
+                const emails = getUserEmails(folder);
+                renderEmailList(emails);
+                
+                // Update inbox count
+                if (folder === 'inbox') {
+                    const unreadCount = emails.filter(email => !email.read).length;
+                    inboxCount.textContent = `(${unreadCount})`;
+                }
+            }
+
+            function getUserEmails(folder) {
+                const userEmails = JSON.parse(localStorage.getItem(`emails_${app.currentUser.email}`) || '{}');
+                return userEmails[folder] || [];
+            }
+
+            function saveUserEmails(folder, emails) {
+                const userEmails = JSON.parse(localStorage.getItem(`emails_${app.currentUser.email}`) || '{}');
+                userEmails[folder] = emails;
+                localStorage.setItem(`emails_${app.currentUser.email}`, JSON.stringify(userEmails));
+            }
+
+            function renderEmailList(emails) {
+                emailList.innerHTML = '';
+                
+                if (emails.length === 0) {
+                    emailList.innerHTML = '<li class="email-item">No emails in this folder</li>';
+                    return;
+                }
+                
+                emails.forEach(email => {
+                    const emailItem = document.createElement('li');
+                    emailItem.className = `email-item ${!email.read ? 'unread' : ''}`;
+                    emailItem.innerHTML = `
+                        <input type="checkbox" class="email-checkbox" data-id="${email.id}">
+                        <div class="email-sender">${email.sender}</div>
+                        <div class="email-subject">${email.subject}</div>
+                        <div class="email-date">${formatDate(email.date)}</div>
+                    `;
+                    
+                    emailItem.addEventListener('click', function(e) {
+                        if (e.target.type !== 'checkbox') {
+                            openEmail(email);
+                        }
+                    });
+                    
+                    emailList.appendChild(emailItem);
+                });
+                
+                // Add event listener to checkboxes
+                document.querySelectorAll('.email-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const anyChecked = document.querySelectorAll('.email-checkbox:checked').length > 0;
+                        deleteSelectedBtn.classList.toggle('hidden', !anyChecked);
+                    });
+                });
+            }
+
+            function openEmail(email) {
+                app.currentEmail = email;
+                
+                // Mark as read
+                if (!email.read) {
+                    email.read = true;
+                    const emails = getUserEmails(app.currentFolder);
+                    const emailIndex = emails.findIndex(e => e.id === email.id);
+                    if (emailIndex !== -1) {
+                        emails[emailIndex] = email;
+                        saveUserEmails(app.currentFolder, emails);
+                        renderEmailList(emails);
+                    }
+                }
+                
+                // Display email content
+                document.getElementById('emailSubject').textContent = email.subject;
+                document.getElementById('senderName').textContent = email.senderName || email.sender;
+                document.getElementById('senderEmail').textContent = email.sender;
+                document.getElementById('senderAvatar').textContent = email.sender.charAt(0).toUpperCase();
+                document.getElementById('emailBody').innerHTML = `
+                    <div>${email.body.replace(/\n/g, '<br>')}</div>
+                    <div class="mt-2">
+                        <hr>
+                        <p class="text-secondary">This email was sent on ${formatDate(email.date)}</p>
+                    </div>
+                `;
+                
+                // Update star button
+                const starBtn = document.getElementById('starBtn');
+                starBtn.textContent = email.starred ? 'Unstar' : 'Star';
+                
+                // Show email content
+                emailContent.classList.add('active');
+            }
+
+            function openComposeModal() {
+                app.isComposing = true;
+                app.isReplying = false;
+                app.isForwarding = false;
+                
+                // Clear compose form
+                document.getElementById('composeTo').value = '';
+                document.getElementById('composeSubject').value = '';
+                document.getElementById('composeBody').value = '';
+                
+                // Show compose modal
+                composeModal.classList.add('active');
+            }
+
+            function closeComposeModal() {
+                composeModal.classList.remove('active');
+                app.isComposing = false;
+                app.isReplying = false;
+                app.isForwarding = false;
+            }
+
+            function sendEmail() {
+                const to = document.getElementById('composeTo').value;
+                const subject = document.getElementById('composeSubject').value;
+                const body = document.getElementById('composeBody').value;
+                
+                if (!to || !subject || !body) {
+                    showToast('Please fill in all fields');
+                    return;
+                }
+                
+                // Create new email
+                const newEmail = {
+                    id: generateId(),
+                    sender: app.currentUser.email,
+                    senderName: app.currentUser.name,
+                    recipient: to,
+                    subject,
+                    body,
+                    date: new Date().toISOString(),
+                    read: true,
+                    starred: false
+                };
+                
+                // Add to sent folder
+                const sentEmails = getUserEmails('sent');
+                sentEmails.unshift(newEmail);
+                saveUserEmails('sent', sentEmails);
+                
+                // Add to recipient's inbox if they exist in our system
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[to]) {
+                    const recipientInbox = getUserEmailsForUser(to, 'inbox');
+                    recipientInbox.unshift(newEmail);
+                    saveUserEmailsForUser(to, 'inbox', recipientInbox);
+                } else {
+                    // For demo purposes, we'll simulate sending to external addresses
+                    // In a real application, this would involve an actual email server
+                    showToast(`Email sent to ${to} (external address)`);
+                }
+                
+                // Close compose modal
+                closeComposeModal();
+                
+                // Refresh current folder if it's sent
+                if (app.currentFolder === 'sent') {
+                    loadEmails('sent');
+                }
+                
+                showToast('Email sent successfully');
+            }
+
+            function saveDraft() {
+                const to = document.getElementById('composeTo').value;
+                const subject = document.getElementById('composeSubject').value || 'No Subject';
+                const body = document.getElementById('composeBody').value;
+                
+                if (!body) {
+                    showToast('Cannot save empty draft');
+                    return;
+                }
+                
+                // Create draft email
+                const draftEmail = {
+                    id: generateId(),
+                    sender: app.currentUser.email,
+                    senderName: app.currentUser.name,
+                    recipient: to,
+                    subject,
+                    body,
+                    date: new Date().toISOString(),
+                    read: true,
+                    starred: false,
+                    isDraft: true
+                };
+                
+                // Add to drafts folder
+                const drafts = getUserEmails('drafts');
+                drafts.unshift(draftEmail);
+                saveUserEmails('drafts', drafts);
+                
+                // Close compose modal
+                closeComposeModal();
+                
+                showToast('Draft saved');
+            }
+
+            function replyToEmail() {
+                if (!app.currentEmail) return;
+                
+                app.isReplying = true;
+                app.isForwarding = false;
+                
+                // Pre-fill compose form
+                document.getElementById('composeTo').value = app.currentEmail.sender;
+                document.getElementById('composeSubject').value = `Re: ${app.currentEmail.subject}`;
+                document.getElementById('composeBody').value = `\n\n---\nOn ${formatDate(app.currentEmail.date)}, ${app.currentEmail.sender} wrote:\n${app.currentEmail.body}`;
+                
+                // Show compose modal
+                composeModal.classList.add('active');
+            }
+
+            function forwardEmail() {
+                if (!app.currentEmail) return;
+                
+                app.isReplying = false;
+                app.isForwarding = true;
+                
+                // Pre-fill compose form
+                document.getElementById('composeTo').value = '';
+                document.getElementById('composeSubject').value = `Fwd: ${app.currentEmail.subject}`;
+                document.getElementById('composeBody').value = `\n\n--- Forwarded message ---\nFrom: ${app.currentEmail.sender}\nDate: ${formatDate(app.currentEmail.date)}\nSubject: ${app.currentEmail.subject}\n\n${app.currentEmail.body}`;
+                
+                // Show compose modal
+                composeModal.classList.add('active');
+            }
+
+            function toggleStarEmail() {
+                if (!app.currentEmail) return;
+                
+                app.currentEmail.starred = !app.currentEmail.starred;
+                
+                // Update email in current folder
+                const emails = getUserEmails(app.currentFolder);
+                const emailIndex = emails.findIndex(e => e.id === app.currentEmail.id);
+                if (emailIndex !== -1) {
+                    emails[emailIndex] = app.currentEmail;
+                    saveUserEmails(app.currentFolder, emails);
+                }
+                
+                // Update starred folder
+                const starredEmails = getUserEmails('starred');
+                if (app.currentEmail.starred) {
+                    // Add to starred if not already there
+                    if (!starredEmails.find(e => e.id === app.currentEmail.id)) {
+                        starredEmails.unshift({...app.currentEmail});
+                        saveUserEmails('starred', starredEmails);
+                    }
+                } else {
+                    // Remove from starred
+                    const index = starredEmails.findIndex(e => e.id === app.currentEmail.id);
+                    if (index !== -1) {
+                        starredEmails.splice(index, 1);
+                        saveUserEmails('starred', starredEmails);
+                    }
+                }
+                
+                // Update star button
+                document.getElementById('starBtn').textContent = app.currentEmail.starred ? 'Unstar' : 'Star';
+                
+                showToast(app.currentEmail.starred ? 'Email starred' : 'Email unstarred');
+            }
+
+            function deleteEmail() {
+                if (!app.currentEmail) return;
+                
+                // Remove from current folder
+                const emails = getUserEmails(app.currentFolder);
+                const emailIndex = emails.findIndex(e => e.id === app.currentEmail.id);
+                if (emailIndex !== -1) {
+                    const deletedEmail = emails.splice(emailIndex, 1)[0];
+                    saveUserEmails(app.currentFolder, emails);
+                    
+                    // Add to trash
+                    const trashEmails = getUserEmails('trash');
+                    trashEmails.unshift(deletedEmail);
+                    saveUserEmails('trash', trashEmails);
+                }
+                
+                // Hide email content
+                emailContent.classList.remove('active');
+                app.currentEmail = null;
+                
+                // Refresh email list
+                loadEmails(app.currentFolder);
+                
+                showToast('Email moved to trash');
+            }
+
+            function deleteSelectedEmails() {
+                const selectedCheckboxes = document.querySelectorAll('.email-checkbox:checked');
+                if (selectedCheckboxes.length === 0) return;
+                
+                const emails = getUserEmails(app.currentFolder);
+                const trashEmails = getUserEmails('trash');
+                const emailsToDelete = [];
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const emailId = checkbox.getAttribute('data-id');
+                    const emailIndex = emails.findIndex(e => e.id === emailId);
+                    if (emailIndex !== -1) {
+                        const deletedEmail = emails.splice(emailIndex, 1)[0];
+                        trashEmails.unshift(deletedEmail);
+                        emailsToDelete.push(deletedEmail);
+                    }
+                });
+                
+                saveUserEmails(app.currentFolder, emails);
+                saveUserEmails('trash', trashEmails);
+                
+                // Refresh email list
+                loadEmails(app.currentFolder);
+                
+                // Hide delete button
+                deleteSelectedBtn.classList.add('hidden');
+                
+                showToast(`${emailsToDelete.length} email(s) moved to trash`);
+            }
+
+            function refreshEmailList() {
+                loadEmails(app.currentFolder);
+                showToast('Email list refreshed');
+            }
+
+            function filterEmails(searchTerm) {
+                const emails = getUserEmails(app.currentFolder);
+                const filteredEmails = emails.filter(email => {
+                    return email.subject.toLowerCase().includes(searchTerm) ||
+                           email.sender.toLowerCase().includes(searchTerm) ||
+                           email.body.toLowerCase().includes(searchTerm);
+                });
+                renderEmailList(filteredEmails);
+            }
+
+            function initializeUserEmails(email) {
+                const userEmails = {
+                    inbox: [],
+                    sent: [],
+                    drafts: [],
+                    starred: [],
+                    trash: []
+                };
+                localStorage.setItem(`emails_${email}`, JSON.stringify(userEmails));
+            }
+
+            function getUserEmailsForUser(email, folder) {
+                const userEmails = JSON.parse(localStorage.getItem(`emails_${email}`) || '{}');
+                return userEmails[folder] || [];
+            }
+
+            function saveUserEmailsForUser(email, folder, emails) {
+                const userEmails = JSON.parse(localStorage.getItem(`emails_${email}`) || '{}');
+                userEmails[folder] = emails;
+                localStorage.setItem(`emails_${email}`, JSON.stringify(userEmails));
+            }
+
+            function initializeSampleData() {
+                // Check if we already have users
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                
+                // If no users, create a demo account
+                if (Object.keys(users).length === 0) {
+                    const demoUser = {
+                        name: 'Demo User',
+                        email: 'demo@mailbox.com',
+                        password: 'password123',
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    users[demoUser.email] = demoUser;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    // Initialize demo user's emails
+                    initializeUserEmails(demoUser.email);
+                    
+                    // Add sample emails to demo user's inbox
+                    const sampleEmails = [
+                        {
+                            id: generateId(),
+                            sender: 'welcome@mailbox.com',
+                            senderName: 'MailBox Team',
+                            recipient: demoUser.email,
+                            subject: 'Welcome to MailBox!',
+                            body: 'Thank you for signing up for MailBox! This is a demonstration email to show you how our email service works.\n\nYou can:\n- Send and receive emails\n- Organize emails into folders\n- Star important emails\n- Search through your emails\n- And much more!\n\nEnjoy using MailBox!',
+                            date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                            read: false,
+                            starred: false
+                        },
+                        {
+                            id: generateId(),
+                            sender: 'newsletter@techblog.com',
+                            senderName: 'Tech Blog Newsletter',
+                            recipient: demoUser.email,
+                            subject: 'This Week in Tech: AI Breakthroughs',
+                            body: 'Hello,\n\nThis week has been exciting in the world of technology! Here are the top stories:\n\n1. Major AI breakthrough in natural language processing\n2. New smartphone release with innovative features\n3. Cybersecurity updates you need to know\n4. The future of quantum computing\n\nRead more on our website!\n\nBest regards,\nTech Blog Team',
+                            date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                            read: true,
+                            starred: true
+                        },
+                        {
+                            id: generateId(),
+                            sender: 'notification@socialapp.com',
+                            senderName: 'Social App',
+                            recipient: demoUser.email,
+                            subject: 'You have new notifications',
+                            body: 'Hi there!\n\nYou have 5 new notifications on Social App:\n- 3 new friend requests\n- 2 comments on your posts\n- 1 new message\n\nCheck them out now!\n\nSocial App Team',
+                            date: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                            read: false,
+                            starred: false
+                        }
+                    ];
+                    
+                    const demoInbox = getUserEmailsForUser(demoUser.email, 'inbox');
+                    sampleEmails.forEach(email => demoInbox.push(email));
+                    saveUserEmailsForUser(demoUser.email, 'inbox', demoInbox);
+                }
+            }
+
+            function generateId() {
+                return 'email_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) {
+                    // Today, show time
+                    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                } else if (diffDays === 1) {
+                    // Yesterday
+                    return 'Yesterday';
+                } else if (diffDays < 7) {
+                    // This week, show day name
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                } else {
+                    // Older, show date
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+            }
+
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
