@@ -853,6 +853,7 @@
       <div class="homeButtons">
         <button class="homeBtn primary" id="homeLoadBtn">Load 3D Model</button>
         <button class="homeBtn" id="homeDragBtn">Drag & Drop File</button>
+	<button class="homeBtn" id="homeDemoBtn">Load Demo Model</button>
       </div>
       <div class="features">
         <div class="feature">🔄 Rotate & Pan</div>
@@ -1309,7 +1310,12 @@
     // Home screen buttons
     const homeLoadBtn = document.getElementById('homeLoadBtn');
     const homeDragBtn = document.getElementById('homeDragBtn');
-    
+    const homeDemoBtn = document.getElementById('homeDemoBtn');
+homeDemoBtn.addEventListener('click', () => {
+  hideHomeScreen();
+  loadFromURL('./ceramic_ancient_pot.glb');
+});
+
     homeLoadBtn.addEventListener('click', () => {
       upload.click();
     });
@@ -2558,10 +2564,6 @@
       
       renderer.render(scene, camera);
     }
-// Auto-load default GLB file
-window.addEventListener('load', () => {
-  loadFromURL('./ceramic_ancient_pot.glb');
-});
     animate();
   </script>
 </body>
