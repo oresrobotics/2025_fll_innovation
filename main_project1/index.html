@@ -582,7 +582,7 @@
     /* Artifact Encyclopedia Panel Styles */
     #artifactEncyclopedia {
       position: absolute;
-      top: 10px;
+      top: 150px;
       right: 10px;
       width: 320px;
       background: rgba(43, 43, 43, 0.95);
@@ -1009,7 +1009,7 @@
     controls.enablePan = true;
     controls.screenSpacePanning = true;
     controls.minDistance = 0.1;
-    controls.maxDistance = 100;
+    controls.maxDistance = 500;
 
     // lights - bright and even coverage
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
@@ -2558,6 +2558,10 @@
       
       renderer.render(scene, camera);
     }
+// Auto-load default GLB file
+window.addEventListener('load', () => {
+  loadFromURL('./ceramic_ancient_pot.glb');
+});
     animate();
   </script>
 </body>
