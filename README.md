@@ -2,3 +2,4 @@
 2025 First Lego League Unearthed Innovation Project
 * Link to project website:  https://oresrobotics.github.io/2025_fll_innovation/
 * [Breaking Bad Dataset](https://breaking-bad-dataset.github.io/artifact.html)
+* [archaeologist homepage](https://oresrobotics.github.io/2025_fll_innovation/my-website/)
