@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up - MySite</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .signup-container {
+      background: #ffffff;
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+      color: #111827;
+    }
+
+    .step {
+      display: none;
+      flex-direction: column;
+    }
+
+    .step.active {
+      display: flex;
+    }
+
+    .signup-form label {
+      margin-bottom: 0.3rem;
+      color: #374151;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .signup-form input {
+      padding: 0.65rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .signup-form input:focus {
+      border-color: #2563eb;
+    }
+
+    .signup-form button {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .signup-form button:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* Plan bars like Grammarly */
+    .plans-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .plan-option {
+      flex: 1;
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #d1d5db;
+      background: #f3f4f6;
+      font-weight: 500;
+    }
+
+    .plan-option.active {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .plan-option h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #111827;
+    }
+
+    .plan-option p {
+      margin: 0.25rem 0 0 0;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .signup-form p {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <h1>Sign Up</h1>
+    <form class="signup-form">
+      <!-- Step 1: Email -->
+      <div class="step active" id="step1">
+        <label>Email</label>
+        <input type="email" placeholder="you@example.com" required>
+        <button type="button" onclick="nextStep(2)">Next</button>
+      </div>
+
+      <!-- Step 2: Password -->
+      <div class="step" id="step2">
+        <label>Password</label>
+        <input type="password" placeholder="Create a password" required>
+        <button type="button" onclick="nextStep(3)">Next</button>
+      </div>
+
+      <!-- Step 3: Plans -->
+      <div class="step" id="step3">
+        <label>Select Plan</label>
+        <div class="plans-container">
+          <div class="plan-option active">
+            <h2>$0.00</h2>
+            <p>per millennium</p>
+          </div>
+          <div class="plan-option">
+            <h2>Nothing!</h2>
+            <p></p>
+          </div>
+          <div class="plan-option">
+            <h2>Nothing!</h2>
+            <p></p>
+          </div>
+        </div>
+        <a href="https://oresrobotics.github.io/2025_fll_innovation/main_project1/index.html" class="btn">Sign Up</a>
+      </div>
+      <p>By signing up, you agree to our Terms & Privacy Policy.</p>
+    </form>
+  </div>
+
+  <script>
+    const plans = document.querySelectorAll('.plan-option');
+    plans.forEach(plan => {
+      plan.addEventListener('click', () => {
+        plans.forEach(p => p.classList.remove('active'));
+        plan.classList.add('active');
+      });
+    });
+
+    function nextStep(stepNumber) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step' + stepNumber).classList.add('active');
+    }
+  </script>
+</body>
+</html>
